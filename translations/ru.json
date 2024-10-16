@@ -1,0 +1,25 @@
+{
+    "main": {
+        "button_login": "Войти",
+        "button_register": "Регистр.",
+        "button_logout": "Выйти"
+    },
+    "register": {
+        "title": "Регистрация",
+        "login": "Логин",
+        "login_help": "Логин должен быть как минимум 5 символов",
+        "password": "Пароль",
+        "password_help": "Пароль должен быть как минимум 5 символов",
+        "email": "Email",
+        "email_help": "EMail нужен для аунтифекации, он не передается 3-им лицам",
+        "invalid_data": "Неверные данные",
+        "button_submit": "Зарегестрироваться"
+    },
+    "login": {
+        "title": "Войти",
+        "login": "Логин",
+        "password": "Пароль",
+        "invalid_data": "Неверный логин или пароль",
+        "button_submit": "Войти"
+    }
+}

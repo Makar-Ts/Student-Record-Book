@@ -8,6 +8,9 @@ var urlencodedParser = bodyParser.urlencoded({ extended: false })
 const apiRoute = require('./api');
 
 
+const fs = require('fs');
+
+
 const ejs = require("ejs")
 
 
@@ -40,6 +43,20 @@ app.use("/api", apiRoute)
 /*                                  Requests                                  */
 /* -------------------------------------------------------------------------- */
 
+const languages = {
+    "en": JSON.parse(fs.readFileSync(__dirname + "/translations/en.json", 'utf8')),
+    "ru": JSON.parse(fs.readFileSync(__dirname + "/translations/ru.json", 'utf8'))
+}
+
+function get_language(req) {
+    var lang = req.headers['accept-language'];
+    if (lang && lang.includes('ru')) {
+        return languages.ru
+    } else {
+        return languages.en
+    }
+}
+
 
 /* ---------------------------------- Main ---------------------------------- */
 
@@ -51,12 +68,15 @@ app.get("/", (req, res) => {
         return res.end();
     }
 
-    res.render("en/main", {
+    var lang = get_language(req)
+
+    res.render("main", {
         title: "StudentRecordBook - Main",
         account: {
             id: req.session.user_id,
             name: req.session.login
         },
+        text: lang,
         content: ""
     })
 })
@@ -65,45 +85,63 @@ app.get("/", (req, res) => {
 /* ---------------------------- Login & Register ---------------------------- */
 
 var register_template = undefined
-ejs.renderFile(__dirname + "/views/en/register.ejs", {}, {}, function(err, str){
-    if (err) {
-        console.error(err)
-
-        return
-    }
-
-    register_template = str
-
-    console.log("Register file render completed")
+fs.readFile(
+    __dirname + "/views/register.ejs",
+    'utf8',
+    function(err, data){
+        if (err) {
+            console.error(err)
+    
+            return
+        }
+    
+        register_template =  ejs.compile(data.toString(), {})
+    
+        console.log("Register file load completed")
 });
 
 app.get("/register", (req, res) => {
-    res.render("en/main", {
+    var lang = get_language(req)
+
+    res.render("main", {
         title: "StudentRecordBook - Register",
-        account: undefined,
-        content: register_template
+        account: {
+            id: req.session.user_id,
+            name: req.session.login
+        },
+        text: lang,
+        content: register_template({text: lang})
     })
 })
 
 
 var login_template = undefined
-ejs.renderFile(__dirname + "/views/en/login.ejs", {}, {}, function(err, str){
+fs.readFile(
+    __dirname + "/views/login.ejs",
+    'utf8',
+    function(err, data){
     if (err) {
         console.error(err)
 
         return
     }
 
-    login_template = str
+    login_template = ejs.compile(data.toString(), {})
 
-    console.log("Login file render completed")
+    console.log("Login file load completed")
 })
 
 app.get("/login", (req, res) => {
-    res.render("en/main", {
+    var lang = get_language(req)
+
+    res.render("main", {
         title: "StudentRecordBook - Login",
-        account: undefined,
-        content: login_template
+        account: {
+            id: req.session.user_id,
+            name: req.session.login
+        },
+        text: lang,
+        content: login_template({text: lang})
     })
 })
 

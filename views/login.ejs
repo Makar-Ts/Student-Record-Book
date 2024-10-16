@@ -1,9 +1,9 @@
 <form class="container login_container" id="login_form">
-    <h2>Login</h2>
+    <h2><%= text.login.title %></h2>
 
 
     <div class="mb-3">
-        <label for="login_login" class="form-label">Login</label>
+        <label for="login_login" class="form-label"><%= text.login.login %></label>
         <input
             type="login"
             class="form-control"
@@ -15,7 +15,7 @@
     </div>
 
     <div class="mb-3">
-        <label for="login_password" class="form-label">Password</label>
+        <label for="login_password" class="form-label"><%= text.login.password %></label>
         <input
             type="password"
             class="form-control"
@@ -28,11 +28,11 @@
     </div>
 
     <div class="invalid-feedback" id="login_invalid_feedback">
-        Incorrect login or password
+        <%= text.login.invalid_data %>
     </div>
 
 
-    <button type="submit" class="btn btn-primary">Submit</button>
+    <button type="submit" class="btn btn-primary"><%= text.login.button_submit %></button>
 
     <script type="module">
         import { validate_password, validate_login } from "/validator.js"

@@ -36,12 +36,12 @@
                         
                     </ul>
                     <div class="d-flex" role="">
-                        <% if (account) { %>
+                        <% if (account.name) { %>
                             <a class="navbar-brand me-2" href="/account"><%= account.name %> </a>
-                            <button class="btn btn btn-outline-light" type="button" id="account_logout">Log Out</button>
+                            <button class="btn btn btn-outline-light" type="button" id="account_logout"><%= text.main.button_logout %></button>
                         <% } else { %>
-                            <a class="btn btn btn-outline-secondary me-2" type="button" href="/login/">Log In</a>
-                            <a class="btn btn btn-outline-info me-2" type="button" href="/register/">Register</a>
+                            <a class="btn btn btn-outline-secondary me-2" type="button" href="/login/"><%= text.main.button_login %></a>
+                            <a class="btn btn btn-outline-info me-2" type="button" href="/register/"><%= text.main.button_register %></a>
                         <% } %>
                     </form>
                 </div>

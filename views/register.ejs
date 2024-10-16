@@ -1,9 +1,9 @@
 <form class="container login_container" id="register_form">
-    <h2>Register</h2>
+    <h2><%= text.register.title %></h2>
     
 
     <div class="mb-3">
-        <label for="login" class="form-label">Login</label>
+        <label for="login" class="form-label"><%= text.register.login %></label>
         <input
             type="login"
             class="form-control"
@@ -12,12 +12,12 @@
             aria-describedby="loginHelp"
         />
         <div id="loginHelp" class="form-text">
-            Your password must be at least 5 characters long
+            <%= text.register.login_help %>
         </div>
     </div>
 
     <div class="mb-3">
-        <label for="email" class="form-label">Email address</label>
+        <label for="email" class="form-label"><%= text.register.email %></label>
         <input
             type="email"
             class="form-control"
@@ -27,12 +27,12 @@
             autocomplete="email"
         />
         <div id="emailHelp" class="form-text">
-            We'll never share your email with anyone else.
+            <%= text.register.email_help %>
         </div>
     </div>
 
     <div class="mb-3">
-        <label for="exampleInputPassword1" class="form-label">Password</label>
+        <label for="exampleInputPassword1" class="form-label"><%= text.register.password %></label>
         <input
             type="password"
             class="form-control"
@@ -42,15 +42,15 @@
             autocomplete="current-password"
         />
         <div id="passwordHelp" class="form-text">
-            Your password must be at least 5 characters long
+            <%= text.register.password_help %>
         </div>
     </div>
 
     <div class="invalid-feedback" id="login_invalid_feedback">
-        Incorrect data
+        <%= text.register.invalid_data %>
     </div>
 
-    <button type="submit" class="btn btn-primary">Submit</button>
+    <button type="submit" class="btn btn-primary"><%= text.register.button_submit %></button>
 
     <script type="module" >
         import { validate_email, validate_password, validate_login } from "/validator.js"

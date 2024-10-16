@@ -1,0 +1,25 @@
+{
+    "main": {
+        "button_login": "Log In",
+        "button_register": "Register",
+        "button_logout": "Log Out"
+    },
+    "register": {
+        "title": "Registration",
+        "login": "Login",
+        "login_help": "Your login must be at least 5 characters long",
+        "password": "Password",
+        "password_help": "Your password must be at least 5 characters long",
+        "email": "Email",
+        "email_help": "We'll never share your email with anyone else",
+        "invalid_data": "Incorrect data",
+        "button_submit": "Register"
+    },
+    "login": {
+        "title": "Login",
+        "login": "Login",
+        "password": "Password",
+        "invalid_data": "Incorrect login or password",
+        "button_submit": "Log In"
+    }
+}
