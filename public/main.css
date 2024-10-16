@@ -1,0 +1,14 @@
+.content-wrapper {
+    margin-top: 40px;
+}
+
+.login_container {
+    width: fit-content;
+
+    display: flex;
+    flex-direction: column;
+}
+
+.login_container h2 {
+    align-self: center;
+}

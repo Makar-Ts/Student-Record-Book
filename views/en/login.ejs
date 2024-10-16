@@ -1,0 +1,91 @@
+<form class="container login_container" id="login_form">
+    <h2>Login</h2>
+
+
+    <div class="mb-3">
+        <label for="login_login" class="form-label">Login</label>
+        <input
+            type="login"
+            class="form-control"
+            id="login_login"
+
+            required
+        />
+        
+    </div>
+
+    <div class="mb-3">
+        <label for="login_password" class="form-label">Password</label>
+        <input
+            type="password"
+            class="form-control"
+            id="login_password"
+
+            autocomplete="current-password"
+
+            required
+        />
+    </div>
+
+    <div class="invalid-feedback" id="login_invalid_feedback">
+        Incorrect login or password
+    </div>
+
+
+    <button type="submit" class="btn btn-primary">Submit</button>
+
+    <script type="module">
+        import { validate_password, validate_login } from "/validator.js"
+
+        // ------------------------------ Validate -------------------------------
+
+        function login_invalid() {
+            document.getElementById('login_invalid_feedback').style.display = 'flex' 
+            // enable feedback
+        }
+
+
+        // ------------------------ Login Form Validation ------------------------
+
+        document.getElementById('login_form').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            var login = document.getElementById('login_login').value;
+            var password = document.getElementById('login_password').value;
+
+            var validation_result = validate_login(login) && validate_password(password);
+
+            if (validation_result) {
+
+
+                // ---------------------------- Send Request -----------------------------
+
+                fetch(
+                    "/api/login/", 
+                    { 
+                        method: "POST",
+                        body: JSON.stringify({
+                            login: login,
+                            password: password
+                        }),
+                        headers: {
+                            "Content-type": "application/json; charset=UTF-8"
+                        }
+                    }
+                ).then((responce) => {
+                    if (responce.status != 200) {
+                        login_invalid()
+
+                        return
+                    }
+
+                    window.location.replace("/")
+                })
+            } else {
+                login_invalid()
+            }
+
+            return false;
+        })
+    </script>
+</div>

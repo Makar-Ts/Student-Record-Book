@@ -1,0 +1,111 @@
+<form class="container login_container" id="register_form">
+    <h2>Register</h2>
+    
+
+    <div class="mb-3">
+        <label for="login" class="form-label">Login</label>
+        <input
+            type="login"
+            class="form-control"
+            id="register_login"
+
+            aria-describedby="loginHelp"
+        />
+        <div id="loginHelp" class="form-text">
+            Your password must be at least 5 characters long
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label for="email" class="form-label">Email address</label>
+        <input
+            type="email"
+            class="form-control"
+            id="register_email"
+            aria-describedby="emailHelp"
+
+            autocomplete="email"
+        />
+        <div id="emailHelp" class="form-text">
+            We'll never share your email with anyone else.
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label for="exampleInputPassword1" class="form-label">Password</label>
+        <input
+            type="password"
+            class="form-control"
+            id="register_password"
+            aria-describedby="passwordHelp"
+
+            autocomplete="current-password"
+        />
+        <div id="passwordHelp" class="form-text">
+            Your password must be at least 5 characters long
+        </div>
+    </div>
+
+    <div class="invalid-feedback" id="login_invalid_feedback">
+        Incorrect data
+    </div>
+
+    <button type="submit" class="btn btn-primary">Submit</button>
+
+    <script type="module" >
+        import { validate_email, validate_password, validate_login } from "/validator.js"
+
+        // ------------------------------ Validate -------------------------------
+
+        function register_invalid() {
+            document.getElementById('login_invalid_feedback').style.display = 'flex' 
+            // enable feedback
+        }
+
+
+        // ------------------------ Login Form Validation ------------------------
+
+        document.getElementById('register_form').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            var login = document.getElementById('register_login').value;
+            var password = document.getElementById('register_password').value;
+            var email = document.getElementById('register_email').value;
+
+            var validation_result = validate_login(login) && validate_password(password) && validate_email(email);
+
+            if (validation_result) {
+
+
+                // ---------------------------- Send Request -----------------------------
+
+                fetch(
+                    "/api/register/", 
+                    { 
+                        method: "POST",
+                        body: JSON.stringify({
+                            login: login,
+                            password: password,
+                            email: email
+                        }),
+                        headers: {
+                            "Content-type": "application/json; charset=UTF-8"
+                        }
+                    }
+                ).then((responce) => {
+                    if (responce.status != 200) {
+                        register_invalid()
+
+                        return
+                    }
+
+                    window.location.replace("/")
+                })
+            } else {
+                register_invalid()
+            }
+
+            return false;
+        })
+    </script>
+</div>
