@@ -6,12 +6,14 @@ var jsonParser = bodyParser.json()
 var urlencodedParser = bodyParser.urlencoded({ extended: false })
 
 const apiRoute = require('./api');
+// route for API requests
 
 
 const fs = require('fs');
 
 
 const ejs = require("ejs")
+// template system
 
 
 
@@ -35,13 +37,18 @@ app.use(
 
 app.set('view engine', 'ejs');
 app.set('views', __dirname + '/views');
+// template directory
 
 app.use("/api", apiRoute)
+
 
 
 /* -------------------------------------------------------------------------- */
 /*                                  Requests                                  */
 /* -------------------------------------------------------------------------- */
+
+
+/* -------------------------------- Language -------------------------------- */
 
 const languages = {
     "en": JSON.parse(fs.readFileSync(__dirname + "/translations/en.json", 'utf8')),
@@ -61,7 +68,7 @@ function get_language(req) {
 /* ---------------------------------- Main ---------------------------------- */
 
 app.get("/", (req, res) => {
-    if (!req.session.user_id) {
+    if (!req.session.user_id) { // if not logged in
         res.writeHead(302, {
             'Location': '/register'
         });
@@ -82,7 +89,7 @@ app.get("/", (req, res) => {
 })
 
 
-/* ---------------------------- Login & Register ---------------------------- */
+/* -------------------------------- Register -------------------------------- */
 
 var register_template = undefined
 fs.readFile(
@@ -96,6 +103,7 @@ fs.readFile(
         }
     
         register_template =  ejs.compile(data.toString(), {})
+        // compile template for faster load in future
     
         console.log("Register file load completed")
 });
@@ -115,6 +123,8 @@ app.get("/register", (req, res) => {
 })
 
 
+/* ---------------------------------- Login --------------------------------- */
+
 var login_template = undefined
 fs.readFile(
     __dirname + "/views/login.ejs",
@@ -127,6 +137,7 @@ fs.readFile(
     }
 
     login_template = ejs.compile(data.toString(), {})
+    // compile template for faster load in future
 
     console.log("Login file load completed")
 })
