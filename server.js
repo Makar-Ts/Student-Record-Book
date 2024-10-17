@@ -1,19 +1,18 @@
-const express = require("express")
-const session = require('express-session')
-const bodyParser = require('body-parser')
+import express from 'express';
+import session from 'express-session';
+import bodyParser from 'body-parser';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import ejs from 'ejs';
 
-var jsonParser = bodyParser.json()
-var urlencodedParser = bodyParser.urlencoded({ extended: false })
+const jsonParser = bodyParser.json();
+const urlencodedParser = bodyParser.urlencoded({ extended: false });
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const apiRoute = require('./api');
+import { router as apiRoute } from './api.js'
 // route for API requests
 
-
-const fs = require('fs');
-
-
-const ejs = require("ejs")
-// template system
+import fs from 'fs';
 
 
 
@@ -40,6 +39,42 @@ app.set('views', __dirname + '/views');
 // template directory
 
 app.use("/api", apiRoute)
+
+
+/* -------------------------------------------------------------------------- */
+/*                                  Templates                                 */
+/* -------------------------------------------------------------------------- */
+
+
+const templates_data = {
+    "login": {
+        "path": __dirname + "/views/login.ejs"
+    },
+    "register": {
+        "path": __dirname + "/views/register.ejs"
+    },
+    "group_list": {
+        "path": __dirname + "/views/group_list.ejs"
+    }
+}
+
+var templates = {}
+
+for (let template in templates_data) {
+    fs.readFile(
+        templates_data[template].path,
+        'utf8',
+        function(err, data) {
+            if (err) {
+                console.error(err)
+            } else {
+                templates[template] = ejs.compile(data.toString(), {})
+
+                console.log(template + " file load completed")
+            }
+        }
+    )
+}
 
 
 
@@ -84,29 +119,15 @@ app.get("/", (req, res) => {
             name: req.session.login
         },
         text: lang,
-        content: ""
+        content: templates.group_list({
+            text: lang,
+            groups: []
+        })
     })
 })
 
 
 /* -------------------------------- Register -------------------------------- */
-
-var register_template = undefined
-fs.readFile(
-    __dirname + "/views/register.ejs",
-    'utf8',
-    function(err, data){
-        if (err) {
-            console.error(err)
-    
-            return
-        }
-    
-        register_template =  ejs.compile(data.toString(), {})
-        // compile template for faster load in future
-    
-        console.log("Register file load completed")
-});
 
 app.get("/register", (req, res) => {
     var lang = get_language(req)
@@ -118,29 +139,12 @@ app.get("/register", (req, res) => {
             name: req.session.login
         },
         text: lang,
-        content: register_template({text: lang})
+        content: templates.register({text: lang})
     })
 })
 
 
 /* ---------------------------------- Login --------------------------------- */
-
-var login_template = undefined
-fs.readFile(
-    __dirname + "/views/login.ejs",
-    'utf8',
-    function(err, data){
-    if (err) {
-        console.error(err)
-
-        return
-    }
-
-    login_template = ejs.compile(data.toString(), {})
-    // compile template for faster load in future
-
-    console.log("Login file load completed")
-})
 
 app.get("/login", (req, res) => {
     var lang = get_language(req)
@@ -152,7 +156,7 @@ app.get("/login", (req, res) => {
             name: req.session.login
         },
         text: lang,
-        content: login_template({text: lang})
+        content: templates.login({text: lang})
     })
 })
 

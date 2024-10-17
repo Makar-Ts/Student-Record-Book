@@ -21,5 +21,11 @@
         "password": "Password",
         "invalid_data": "Incorrect login or password",
         "button_submit": "Log In"
+    },
+    "groups": {
+        "no_groups_info": "You are not currently in any groups, join or create one by clicking the button below!",
+        "join_group": "Join",
+        "join_group_placeholder": "Group invite code...",
+        "create_group": "Create"
     }
 }

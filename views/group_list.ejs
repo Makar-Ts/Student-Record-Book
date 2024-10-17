@@ -1,0 +1,30 @@
+<div class="container">
+
+    <% if (groups.length === 0) { %>
+        <div class="alert alert-info" role="alert">
+            <%= text.groups.no_groups_info %>
+        </div>
+    <% } else { %>
+        <ol class="list-group list-group-flush">
+        <% for (let group of groups) { %>
+        
+            <li class="list-group-item d-flex justify-content-between align-items-start">
+                <div class="ms-2 me-auto">
+                    <div class="fw-bold"><%= group.name %></div>
+                    <%= group.description %>
+                </div>
+                <!-- <span class="badge text-bg-primary rounded-pill">14</span> -->
+            </li>
+        <% } %>
+        </ol>
+    <%  } %>
+
+    <div class="btn-group" role="group" style="width: 100%; margin-top: 25px;">
+        <div class="btn-group" role="group" style="width: 100%;">
+            <input type="text" class="form-control" placeholder="<%= text.groups.join_group_placeholder %>"
+                    style="border-radius: var(--bs-border-radius) 0px 0px var(--bs-border-radius);" size="64">
+        </div>
+        <button type="button" class="btn btn-primary"><%= text.groups.join_group %></button>
+        <button type="button" class="btn btn-primary"><%= text.groups.create_group %></button>
+    </div>
+</div>

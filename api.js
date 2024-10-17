@@ -1,17 +1,22 @@
-const express = require('express')
-const session = require('express-session')
-const bodyParser = require('body-parser')
-
-var jsonParser = bodyParser.json()
-var urlencodedParser = bodyParser.urlencoded({ extended: false })
-
-var router = express.Router()
+import express from 'express';
+import session from 'express-session';
+import bodyParser from 'body-parser';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import ejs from 'ejs';
 
 
-const sqlite3 = require("sqlite3").verbose()
+import sqlite3 from 'sqlite3';
 
 
-const passwordHash = require('password-hash');
+import passwordHash from 'password-hash';
+
+var router = express.Router();
+
+
+const jsonParser = bodyParser.json();
+const urlencodedParser = bodyParser.urlencoded({ extended: false });
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 
 
@@ -29,7 +34,7 @@ const db = new sqlite3.Database('./database.db')
 /* -------------------------------------------------------------------------- */
 
 
-const login_validator = require("./public/validator")
+import { validate_email, validate_password, validate_login } from "./public/validator.js"
 
 
 /* -------------------------------- Register -------------------------------- */
@@ -47,9 +52,9 @@ router.post("/register", urlencodedParser, (req, res) => {
     if (!(p.password && p.login && p.email)) return res.sendStatus(400);
 
     if (!(
-        login_validator.validate_login(p.login) &&
-        login_validator.validate_password(p.password) &&
-        login_validator.validate_email(p.email)
+        validate_login(p.login) &&
+        validate_password(p.password) &&
+        validate_email(p.email)
     )) return res.statusCode(406)
 
 
@@ -98,8 +103,8 @@ router.post("/login", urlencodedParser, (req, res) => {
     if (!(p.password && p.login)) return res.sendStatus(400);
 
     if (!(
-        login_validator.validate_login(p.login) &&
-        login_validator.validate_password(p.password)
+        validate_login(p.login) &&
+        validate_password(p.password)
     )) return res.sendStatus(406)
 
 
@@ -166,4 +171,4 @@ router.post("/logout", (req, res) => {
 
 
 
-module.exports = router;
+export { router }
