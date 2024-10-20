@@ -10,7 +10,10 @@ const jsonParser = bodyParser.json();
 const urlencodedParser = bodyParser.urlencoded({ extended: false });
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-import { router as apiRoute, getAllGroups } from './api.js'
+import { router as apiRoute, 
+        getAllGroups, 
+        isGroupMember,
+        getAllGroupMembers } from './api.js'
 // route for API requests
 
 import fs from 'fs';
@@ -93,7 +96,135 @@ app.get("/", AsyncHandler(async (req, res) => {
             }
         }]
     })
-}))
+}));
+
+
+
+/* -------------------------------------------------------------------------- */
+/*                               Groups Requests                              */
+/* -------------------------------------------------------------------------- */
+
+
+app.get("/groups/:group_id", AsyncHandler(async (req, res) => {
+    if (!req.session.user_id) { // if not logged in
+        res.writeHead(302, { 
+            'Location': '/register'
+        });
+        return res.end();
+    }
+
+    var group_id = parseInt(req.params.group_id)
+    var member_role = await isGroupMember(req.session.user_id, group_id)
+
+    if (member_role == -1) {
+        res.writeHead(403, {
+            'Location': '/'
+        });
+        return res.end();
+    }
+
+    res.writeHead(308, {
+        'Location': `/groups/${group_id}/main`
+    });
+    res.end();
+}));
+
+
+app.get("/groups/:group_id/main", AsyncHandler(async (req, res) => {
+    if (!req.session.user_id) { // if not logged in
+        res.writeHead(302, {
+            'Location': '/register'
+        });
+        return res.end();
+    }
+
+    var lang = get_language(req)
+
+    var group_id = parseInt(req.params.group_id)
+    var member_role = await isGroupMember(req.session.user_id, group_id)
+
+    if (member_role == -1) {
+        res.writeHead(403, {
+            'Location': '/'
+        });
+        return res.end();
+    }
+
+
+    res.render("main", {
+        title: `StudentRecordBook - Group ${group_id}`,
+        account: {
+            id: req.session.user_id,
+            name: req.session.login
+        },
+        text: lang,
+        is_file: true,
+        content: [{
+            file: `group/tabs/${member_role == 0 ? "owner" : "member"}`,
+            data: {
+                text: lang,
+                group_id: group_id,
+                active_tab: 0
+            }
+        }]
+    })
+}));
+
+
+app.get("/groups/:group_id/members", AsyncHandler(async (req, res) => {
+    if (!req.session.user_id) { // if not logged in
+        res.writeHead(302, {
+            'Location': '/register'
+        });
+        return res.end();
+    }
+
+    var lang = get_language(req)
+
+    var group_id = parseInt(req.params.group_id)
+    var member_role = await isGroupMember(req.session.user_id, group_id)
+
+    if (member_role == -1) {
+        res.writeHead(403, {
+            'Location': '/'
+        });
+        return res.end();
+    }
+
+    res.render("main", {
+        title: `StudentRecordBook - Group ${group_id}`,
+        account: {
+            id: req.session.user_id,
+            name: req.session.login
+        },
+        text: lang,
+        is_file: true,
+        content: [
+            {
+                file: `group/tabs/${member_role == 0? "owner" : "member"}`,
+                data: {
+                    text: lang,
+                    group_id: group_id,
+                    active_tab: 2
+                }
+            }, 
+            {
+                file:`group/members/${member_role == 0? "owner" : "member"}`,
+                data: {
+                    text: lang,
+                    group_id: group_id,
+                    members: await getAllGroupMembers(group_id)
+                }
+            }
+        ]
+    })
+}));
+
+
+
+/* -------------------------------------------------------------------------- */
+/*                                Autification                                */
+/* -------------------------------------------------------------------------- */
 
 
 /* -------------------------------- Register -------------------------------- */
@@ -148,7 +279,7 @@ app.get("/login", (req, res) => {
 /* -------------------------------------------------------------------------- */
 
 
-app.listen(3000, (err) => {
+app.listen(80, (err) => {
     if (!err) {
         console.log("Start ok")
     }

@@ -1,0 +1,25 @@
+<div class="container">
+    <ul class="nav nav-tabs">
+        <li class="nav-item">
+            <a class="nav-link <%= active_tab == 0 ? "active" : "" %>" 
+                <%= active_tab == 0 ? "aria-current=\"page\"" : "" %> href="./main"><%= text.groups.group_tabs.main %></a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link <%= active_tab == 1 ? "active" : "" %>" 
+                <%= active_tab == 1 ? "aria-current=\"page\"" : "" %> href="./info"><%= text.groups.group_tabs.info %></a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link <%= active_tab == 2 ? "active" : "" %>" 
+                <%= active_tab == 2 ? "aria-current=\"page\"" : "" %> href="./members"><%= text.groups.group_tabs.members %></a>
+        </li>
+        <li class="nav-item" style="border-left: 1px solid var(--bs-border-color);"></li>
+        <li class="nav-item">
+            <a class="nav-link <%= active_tab == 3 ? "active" : "" %>" 
+                <%= active_tab == 3 ? "aria-current=\"page\"" : "" %> href="./plan"><%= text.groups.group_tabs.plan %></a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link <%= active_tab == 4 ? "active" : "" %>" 
+                <%= active_tab == 4 ? "aria-current=\"page\"" : "" %> href="./settings"><%= text.groups.group_tabs.settings %></a>
+        </li>
+    </ul>
+</div>

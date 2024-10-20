@@ -1,0 +1,38 @@
+<div class="container">
+    <ul class="list-group list-group-flush">
+        <% for (var member of members) { %>
+            <li class="list-group-item d-flex justify-content-between align-items-start">
+                <div style="display: flex; align-items: center;">
+                    <div class="fw-bold"><%= member.login %></div>
+                    <small class="link-secondary" style="margin-left: 8px;">(#<%= member.id %>)</small>
+                </div>
+                <% if (member.role == 0) { %>
+                    <span class="badge text-bg-primary rounded-pill"><%= text.groups.group_members.owner %></span>
+                <% } else { %>
+                    <button type="button" class="btn btn-danger btn-sm member-kick-button" member_id="<%= member.id %>"><%= text.groups.group_members.kick %></button>
+                <% } %>
+            </li>
+        <% } %>
+    </ul>
+
+    <script type="module">
+        const group_id = JSON.parse('<%- JSON.stringify({ id: group_id }) %>').id
+
+        const kick_buttons = Array.from(document.getElementsByClassName('member-kick-button'));
+        kick_buttons.forEach(el => {
+            el.addEventListener("click", (e) => {
+                var member_id = el.getAttribute('member_id');
+
+                fetch(`/api/group/${group_id}/members/${member_id}`, {
+                    method: 'DELETE'
+                }).then((response) => {
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        console.error(response.statusText);
+                    }
+                })
+            })
+        });
+    </script>
+</div>

@@ -39,6 +39,20 @@
             "invalid_data": "Неверные данные",
             "button_dismiss": "Закрыть",
             "button_submit": "Создать"
+        },
+
+        "group_tabs": {
+            "main": "Главная",
+            "info": "Информация",
+            "members": "Участники",
+            "files": "Файлы",
+            "settings": "Настройки",
+            "plan": "План"
+        },
+
+        "group_members": {
+            "owner": "владелец",
+            "kick": "Выгнать"
         }
     }
 }

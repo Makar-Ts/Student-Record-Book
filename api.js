@@ -218,6 +218,52 @@ async function getAllGroups(user_id) {
 }
 
 
+/* -------------------------- Check Is Group Member ------------------------- */
+
+async function isGroupMember(user_id, group_id) {
+    try {
+        var row = 
+            await db.get(
+                `SELECT role FROM GroupsMembers WHERE group_id =? AND member_id =?`,
+                [
+                    group_id,
+                    user_id
+                ]
+            );
+        
+        return row ? row.role : -1;
+    } catch (err) {
+        console.error(err)
+
+        return -1;
+    }
+}
+
+
+/* ------------------------- Get All Group's Members ------------------------ */
+
+async function getAllGroupMembers(group_id) {
+    try {
+        var rows = 
+            await db.all(
+                `SELECT u.id, u.login, u.email, gm.role
+                FROM Users u
+                JOIN GroupsMembers gm ON u.id = gm.member_id
+                WHERE gm.group_id = ?`,
+                [
+                    group_id
+                ]
+            );
+
+        return rows
+    } catch (err) {
+        console.error(err)
+
+        return []
+    }
+}
+
+
 /* ------------------------------ Create Group ------------------------------ */
 
 router.post("/group/create", urlencodedParser, AsyncHandler(async (req, res) => {
@@ -305,5 +351,32 @@ router.post("/group/join", urlencodedParser, AsyncHandler(async (req, res) => {
 }))
 
 
+/* ------------------------- Kick Member From Group ------------------------- */
 
-export { router, getAllGroups }
+router.delete("/group/:group_id/members/:member_id", urlencodedParser, AsyncHandler(async (req, res) => {
+    if (!req.session.user_id) return res.sendStatus(401); // if not logged in
+
+    var group_id = parseInt(req.params.group_id)
+    if (await isGroupMember(req.session.user_id, group_id) != 0) return res.sendStatus(403); // if not group owner
+
+    var member_id = parseInt(req.params.member_id)
+    try {
+        await db.get(
+            "DELETE FROM GroupsMembers WHERE group_id =? AND member_id =?",
+            [
+                group_id,
+                member_id
+            ]
+        )
+        
+        return res.sendStatus(200)
+    } catch (err) {
+        console.error(err);
+
+        return res.sendStatus(500);
+    }
+}))
+
+
+
+export { router, getAllGroups, isGroupMember, getAllGroupMembers }

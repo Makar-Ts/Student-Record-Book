@@ -39,6 +39,20 @@
             "invalid_data": "Incorrect data",
             "button_dismiss": "Close",
             "button_submit": "Create"
+        },
+
+        "group_tabs": {
+            "main": "Main",
+            "info": "Info",
+            "members": "Members",
+            "files": "Files",
+            "settings": "Settings",
+            "plan": "Plan"
+        },
+
+        "group_members": {
+            "owner": "owner",
+            "kick": "Kick"
         }
     }
 }
