@@ -35,7 +35,7 @@
             "description": "Description",
             "description_help": "Describe your group (optional)",
             "description_short": "Short description",
-            "description_short_help": "",
+            "description_short_help": "Group description to be displayed on the main screen",
             "invalid_data": "Incorrect data",
             "button_dismiss": "Close",
             "button_submit": "Create"
@@ -53,6 +53,15 @@
         "group_members": {
             "owner": "owner",
             "kick": "Kick"
+        },
+
+        "group_info": {
+            "description": "Description",
+            "invite_code": "Invite code",
+            "copy": "Copy",
+            "copy_succesfull": "Copied!",
+            "regenerate_invite": "Regenerate",
+            "owner": "Owner"
         }
     }
 }

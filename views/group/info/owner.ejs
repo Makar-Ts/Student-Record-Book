@@ -1,0 +1,50 @@
+<div class="container"
+     style="padding: 15px 20%;">
+    <h1 class="fw-bold"><%= group_info.name %></h2>
+    <h4 style="padding-top: 20px;"><%= text.groups.group_info.description %></h4>
+    <p style="padding-left: 10px;"><%= group_info.description %></p>
+    <p><%= text.groups.group_info.owner %>: <%= group_info.owner_name %> <small class="link-secondary" style="margin-left: 4px;">(#<%= group_info.owner_id %>)</small></p>
+    <div>
+        <h4><%= text.groups.group_info.invite_code %>: </h4>
+        <div class="alert alert-dark" role="alert" style="word-break: break-all; 
+                                                            margin: 0;
+                                                            border-bottom-left-radius: 0;
+                                                            border-bottom-right-radius: 0;"><%= group_info.invite_code %></div>
+        <div class="<%= is_mobile ? "btn-group-vertical" : "btn-group" %>" id="invite_code_button_group" style="display: flex;">
+            <button type="button" class="btn btn-success no-top-border" id="button_copy_invite_code"><%= text.groups.group_info.copy %></button>
+            <button type="button" class="btn btn-outline-primary no-top-border" id="button_regenerate_invite_code"><%= text.groups.group_info.regenerate_invite %></button>
+        </div>
+    </div>
+
+    <script type="module">
+        var invite_code = '<%- group_info.invite_code %>'
+
+        document.getElementById("button_copy_invite_code").addEventListener("click", (e) => {
+            navigator.clipboard.writeText(invite_code)
+                .then(() => {
+                    document.getElementById("button_copy_invite_code").innerText = "<%- text.groups.group_info.copy_succesfull %>"
+                })
+                .catch(err => {
+                    console.log('Something went wrong', err);
+                });
+        })
+
+
+        document.getElementById("button_regenerate_invite_code").addEventListener("click", (e) => {
+            fetch('/api/group/<%- group_info.id %>/invite', {
+                method: 'PUT'
+            })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.reload();
+                    } else {
+                        document.getElementById("invite_code_button_group").classList.add("invalid-data-shake")
+
+                        setTimeout(() => {
+                            document.getElementById("invite_code_button_group").classList.remove("invalid-data-shake")
+                        }, 300)
+                    }
+                })
+        })
+    </script>
+</div>

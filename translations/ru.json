@@ -53,6 +53,15 @@
         "group_members": {
             "owner": "владелец",
             "kick": "Выгнать"
+        },
+
+        "group_info": {
+            "description": "Описание",
+            "invite_code": "Инвайт-код",
+            "copy": "Копировать",
+            "copy_succesfull": "Скопированно!",
+            "regenerate_invite": "Пересоздать",
+            "owner": "Создатель"
         }
     }
 }

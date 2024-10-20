@@ -264,6 +264,36 @@ async function getAllGroupMembers(group_id) {
 }
 
 
+/* ---------------------------- Get Group's Info ---------------------------- */
+
+async function getGroupInfo(group_id) {
+    try {
+        var row = 
+            await db.get(
+                `SELECT g.id, g.name, g.description, g.description_short, g.invite_code, u.login AS owner_name, u.id AS owner_id
+                FROM Groups g 
+                JOIN Users u ON u.id = g.owner
+                WHERE g.id =?`,
+                [
+                    group_id
+                ]
+            );
+
+        return row
+    } catch (err) {
+        console.error(err)
+
+        return null
+    }
+}
+
+
+
+/* -------------------------------------------------------------------------- */
+/*                               Group Requests                               */
+/* -------------------------------------------------------------------------- */
+
+
 /* ------------------------------ Create Group ------------------------------ */
 
 router.post("/group/create", urlencodedParser, AsyncHandler(async (req, res) => {
@@ -351,6 +381,31 @@ router.post("/group/join", urlencodedParser, AsyncHandler(async (req, res) => {
 }))
 
 
+/* ------------------------- Regenerate Invite Code ------------------------- */
+
+router.put("/group/:group_id/invite", urlencodedParser, AsyncHandler(async (req, res) => {
+    if (!req.session.user_id) return res.sendStatus(401); // if not logged in
+
+    var group_id = parseInt(req.params.group_id)
+    if (await isGroupMember(req.session.user_id, group_id) != 0) return res.sendStatus(403); // if not group owner
+
+    try {
+        var new_invite_code = generateRandomToken(64)
+        await db.run("UPDATE Groups SET invite_code =? WHERE id =?",
+            [
+                new_invite_code,
+                group_id
+            ])
+        
+        return res.sendStatus(200);
+    } catch (err) {
+        console.error(err);
+
+        return res.sendStatus(500);
+    }
+}));
+
+
 /* ------------------------- Kick Member From Group ------------------------- */
 
 router.delete("/group/:group_id/members/:member_id", urlencodedParser, AsyncHandler(async (req, res) => {
@@ -379,4 +434,4 @@ router.delete("/group/:group_id/members/:member_id", urlencodedParser, AsyncHand
 
 
 
-export { router, getAllGroups, isGroupMember, getAllGroupMembers }
+export { router, getAllGroups, isGroupMember, getAllGroupMembers, getGroupInfo }

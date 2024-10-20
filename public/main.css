@@ -29,3 +29,8 @@
 .members-group-item:hover {
     background-color: var(--bs-secondary-bg);
 }
+
+.no-top-border {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}

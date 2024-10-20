@@ -1,5 +1,6 @@
 import express from 'express';
 import session from 'express-session';
+import useragent from 'express-useragent'
 import bodyParser from 'body-parser';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
@@ -13,7 +14,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 import { router as apiRoute, 
         getAllGroups, 
         isGroupMember,
-        getAllGroupMembers } from './api.js'
+        getAllGroupMembers,
+        getGroupInfo } from './api.js'
 // route for API requests
 
 import fs from 'fs';
@@ -37,6 +39,8 @@ app.use(
         saveUninitialized: true,
     })
 );
+
+app.use(useragent.express());
 
 app.set('view engine', 'ejs');
 app.set('views', __dirname + '/views');
@@ -214,6 +218,56 @@ app.get("/groups/:group_id/members", AsyncHandler(async (req, res) => {
                     text: lang,
                     group_id: group_id,
                     members: await getAllGroupMembers(group_id)
+                }
+            }
+        ]
+    })
+}));
+
+app.get("/groups/:group_id/info", AsyncHandler(async (req, res) => {
+    if (!req.session.user_id) { // if not logged in
+        res.writeHead(302, {
+            'Location': '/register'
+        });
+        return res.end();
+    }
+
+    var lang = get_language(req)
+
+    var group_id = parseInt(req.params.group_id)
+    var member_role = await isGroupMember(req.session.user_id, group_id)
+
+    if (member_role == -1) {
+        res.writeHead(403, {
+            'Location': '/'
+        });
+        return res.end();
+    }
+
+
+    res.render("main", {
+        title: `StudentRecordBook - Group ${group_id}`,
+        account: {
+            id: req.session.user_id,
+            name: req.session.login
+        },
+        text: lang,
+        is_file: true,
+        content: [
+            {
+                file: `group/tabs/${member_role == 0? "owner" : "member"}`,
+                data: {
+                    text: lang,
+                    group_id: group_id,
+                    active_tab: 1
+                }
+            }, 
+            {
+                file: `group/info/${member_role == 0? "owner" : "member"}`,
+                data: {
+                    text: lang,
+                    is_mobile: req.useragent.isMobile,
+                    group_info: await getGroupInfo(group_id)
                 }
             }
         ]
