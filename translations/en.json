@@ -26,6 +26,19 @@
         "no_groups_info": "You are not currently in any groups, join or create one by clicking the button below!",
         "join_group": "Join",
         "join_group_placeholder": "Group invite code...",
-        "create_group": "Create"
+        "create_group": "Create",
+
+        "create_modal": {
+            "title": "Create Group",
+            "name": "Name",
+            "name_help": "Your group name must be at least 5 characters long",
+            "description": "Description",
+            "description_help": "Describe your group (optional)",
+            "description_short": "Short description",
+            "description_short_help": "",
+            "invalid_data": "Incorrect data",
+            "button_dismiss": "Close",
+            "button_submit": "Create"
+        }
     }
 }

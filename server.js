@@ -3,13 +3,14 @@ import session from 'express-session';
 import bodyParser from 'body-parser';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import AsyncHandler from 'express-async-handler';
 import ejs from 'ejs';
 
 const jsonParser = bodyParser.json();
 const urlencodedParser = bodyParser.urlencoded({ extended: false });
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-import { router as apiRoute } from './api.js'
+import { router as apiRoute, getAllGroups } from './api.js'
 // route for API requests
 
 import fs from 'fs';
@@ -41,42 +42,6 @@ app.set('views', __dirname + '/views');
 app.use("/api", apiRoute)
 
 
-/* -------------------------------------------------------------------------- */
-/*                                  Templates                                 */
-/* -------------------------------------------------------------------------- */
-
-
-const templates_data = {
-    "login": {
-        "path": __dirname + "/views/login.ejs"
-    },
-    "register": {
-        "path": __dirname + "/views/register.ejs"
-    },
-    "group_list": {
-        "path": __dirname + "/views/group_list.ejs"
-    }
-}
-
-var templates = {}
-
-for (let template in templates_data) {
-    fs.readFile(
-        templates_data[template].path,
-        'utf8',
-        function(err, data) {
-            if (err) {
-                console.error(err)
-            } else {
-                templates[template] = ejs.compile(data.toString(), {})
-
-                console.log(template + " file load completed")
-            }
-        }
-    )
-}
-
-
 
 /* -------------------------------------------------------------------------- */
 /*                                  Requests                                  */
@@ -102,7 +67,7 @@ function get_language(req) {
 
 /* ---------------------------------- Main ---------------------------------- */
 
-app.get("/", (req, res) => {
+app.get("/", AsyncHandler(async (req, res) => {
     if (!req.session.user_id) { // if not logged in
         res.writeHead(302, {
             'Location': '/register'
@@ -119,12 +84,16 @@ app.get("/", (req, res) => {
             name: req.session.login
         },
         text: lang,
-        content: templates.group_list({
-            text: lang,
-            groups: []
-        })
+        is_file: true,
+        content: [{
+            file: "group_list",
+            data: {
+                text: lang,
+                groups: await getAllGroups(req.session.user_id)
+            }
+        }]
     })
-})
+}))
 
 
 /* -------------------------------- Register -------------------------------- */
@@ -139,7 +108,13 @@ app.get("/register", (req, res) => {
             name: req.session.login
         },
         text: lang,
-        content: templates.register({text: lang})
+        is_file: true,
+        content: [{
+            file: "register",
+            data: {
+                text: lang
+            }
+        }]
     })
 })
 
@@ -156,7 +131,13 @@ app.get("/login", (req, res) => {
             name: req.session.login
         },
         text: lang,
-        content: templates.login({text: lang})
+        is_file: true,
+        content: [{
+            file: "login",
+            data: {
+                text: lang
+            }
+        }]
     })
 })
 

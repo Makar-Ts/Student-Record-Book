@@ -51,7 +51,13 @@
         </nav>
 
         <div class="content-wrapper">
-        <%- content %>
+        <% if(is_file) { 
+            for (var file of content) { %>
+                <%- include(file.file, file.data) %>
+        <%  }
+        } else { %>
+            <%- content %>
+        <% } %>
         </div>
 
         <script

@@ -1,30 +1,193 @@
 <div class="container">
-
     <% if (groups.length === 0) { %>
-        <div class="alert alert-info" role="alert">
-            <%= text.groups.no_groups_info %>
-        </div>
-    <% } else { %>
-        <ol class="list-group list-group-flush">
-        <% for (let group of groups) { %>
-        
-            <li class="list-group-item d-flex justify-content-between align-items-start">
-                <div class="ms-2 me-auto">
-                    <div class="fw-bold"><%= group.name %></div>
-                    <%= group.description %>
-                </div>
-                <!-- <span class="badge text-bg-primary rounded-pill">14</span> -->
-            </li>
-        <% } %>
-        </ol>
-    <%  } %>
-
-    <div class="btn-group" role="group" style="width: 100%; margin-top: 25px;">
-        <div class="btn-group" role="group" style="width: 100%;">
-            <input type="text" class="form-control" placeholder="<%= text.groups.join_group_placeholder %>"
-                    style="border-radius: var(--bs-border-radius) 0px 0px var(--bs-border-radius);" size="64">
-        </div>
-        <button type="button" class="btn btn-primary"><%= text.groups.join_group %></button>
-        <button type="button" class="btn btn-primary"><%= text.groups.create_group %></button>
+    <div class="alert alert-info" role="alert">
+        <%= text.groups.no_groups_info %>
     </div>
+    <% } else { %>
+    <ol class="list-group">
+        <% for (let group of groups) { %>
+
+        <li
+            class="list-group-item d-flex justify-content-between align-items-start members-group-item"
+            href="/group/<%= group.id %>"
+        >
+            <div class="ms-2 me-auto">
+                <div class="fw-bold"><%= group.name %></div>
+                <%= group.description_short %>
+            </div>
+            <!-- <span class="badge text-bg-primary rounded-pill">14</span> -->
+        </li>
+        <% } %>
+    </ol>
+    <% } %>
+
+    <div class="btn-group" role="group" style="width: 100%; margin-top: 25px" id="input_group">
+        <div class="btn-group" role="group" style="width: 100%">
+            <input
+                type="text"
+                class="form-control"
+                placeholder="<%= text.groups.join_group_placeholder %>"
+                style="
+                    border-radius: var(--bs-border-radius) 0px 0px
+                        var(--bs-border-radius);
+                "
+                size="64"
+                id="group_invite_code"
+            />
+        </div>
+        <button type="button" class="btn btn-primary" id="group_join_button">
+            <%= text.groups.join_group %>
+        </button>
+        <button type="button" 
+                class="btn btn-success"
+                data-bs-toggle="modal" 
+                data-bs-target="#create_modal"
+                >
+            <%= text.groups.create_group %>
+        </button>
+    </div>
+
+
+    <div class="modal fade" tabindex="-1" id="create_modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><%= text.groups.create_modal.title %></h5>
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"
+                    ></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="group_create_input_name" class="form-label"><%= text.groups.create_modal.name %></label>
+                        <input type="text" class="form-control" id="group_create_input_name" aria-describedby="group_create_input_name_help">
+                        <div id="group_create_input_name_help" class="form-text"><%= text.groups.create_modal.name_help %></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="group_create_input_description" class="form-label"><%= text.groups.create_modal.description %></label>
+                        <textarea   class="form-control" 
+                                    id="group_create_input_description" 
+                                    aria-describedby="group_create_input_description_help"
+                        ></textarea>
+                        <div id="group_create_input_description_help" class="form-text"><%= text.groups.create_modal.description_help %></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="group_create_input_description_short" class="form-label"><%= text.groups.create_modal.description_short %></label>
+                        <input type="text" class="form-control" id="group_create_input_description_short" aria-describedby="group_create_input_description_short_help">
+                        <div id="group_create_input_description_short_help" class="form-text"><%= text.groups.create_modal.description_short_help %></div>
+                    </div>
+
+                    <div class="invalid-feedback" id="group_create_invalid_feedback">
+                        <%= text.groups.create_modal.invalid_data %>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal"
+                    >
+                        <%= text.groups.create_modal.button_dismiss %>
+                    </button>
+                    <button type="button" class="btn btn-success" id="group_create_submit">
+                        <%= text.groups.create_modal.button_submit %>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <script type="module">
+            import { validate_group_name } from "/validator.js"
+            
+
+            function create_group_invalid() {
+                document.getElementById('group_create_invalid_feedback').style.display = 'flex'
+            }
+
+
+            document.getElementById('group_create_submit').addEventListener('click', (e) => {
+                const   name              = document.getElementById('group_create_input_name').value,
+                        description       = document.getElementById('group_create_input_description').value,
+                        description_short = document.getElementById('group_create_input_description_short').value;
+                
+                if (!validate_group_name(name)) {
+                    create_group_invalid()
+                    return
+                }
+
+                fetch("/api/group/create", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name,
+                        description,
+                        description_short
+                    })
+                }).then(result => {
+                    if (result.ok) {
+                        window.location.reload();
+                    } else {
+                        create_group_invalid()
+                    }
+                })
+            })
+        </script>
+    </div>
+
+
+    <script type="module">
+        import { validate_group_code } from "/validator.js"
+
+        function join_group_invalid() {
+            document.getElementById("input_group").classList.add("invalid-data-shake")
+
+            setTimeout(() => {
+                document.getElementById("input_group").classList.remove("invalid-data-shake")
+            }, 300)
+        }
+
+        document.getElementById("group_join_button").addEventListener("click", (e) => {
+            const inv_code = document.getElementById("group_invite_code").value
+
+            if (!(
+                validate_group_code(inv_code)
+            )) return join_group_invalid()
+
+            fetch(`/api/group/join`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    invite_code: inv_code
+                })
+            }).then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    join_group_invalid()
+                }
+            })
+        })
+
+        document.getElementById("group_invite_code").addEventListener("keyup", (e) => {
+            if (e.key === "Enter") {
+                document.getElementById("group_join_button").click()
+            }
+        })
+
+
+
+        const groups = Array.from(document.getElementsByClassName('members-group-item'));
+        groups.forEach(el => {
+            el.addEventListener("click", (e) => {
+                window.location.href = el.getAttribute('href');
+            })
+        });
+    </script>
 </div>
