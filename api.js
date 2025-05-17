@@ -1,25 +1,23 @@
-import express from 'express';
-import session from 'express-session';
-import bodyParser from 'body-parser';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-import AsyncHandler from 'express-async-handler';
 import { AsyncDatabase } from "promised-sqlite3";
-import ejs from 'ejs';
 
-
-import sqlite3 from 'sqlite3';
+import { 
+    express,
+    session,
+    useragent,
+    bodyParser,
+    jsonParser,
+    urlencodedParser,
+    AsyncHandler,
+    ejs,
+    __dirname,
+    fs
+} from './includes.js'
 
 
 import { randomBytes } from 'crypto'
 import passwordHash from 'password-hash';
 
 var router = express.Router();
-
-
-const jsonParser = bodyParser.json();
-const urlencodedParser = bodyParser.urlencoded({ extended: false });
-const __dirname = dirname(fileURLToPath(import.meta.url));
 
 
 
@@ -60,7 +58,8 @@ import {
     validate_password, 
     validate_login, 
     validate_group_name, 
-    validate_group_code 
+    validate_group_code,
+    validate_subject_name
 } from "./public/validator.js"
 
 
@@ -288,6 +287,51 @@ async function getGroupInfo(group_id) {
 }
 
 
+/* ---------------------------- Get All Subjects ---------------------------- */
+
+async function getAllSubjects(group_id) {
+    try {
+        var rows = 
+            await db.all(
+                `SELECT id, name, description
+                FROM GroupsSubjects
+                WHERE "group" =?`,
+                [
+                    group_id
+                ]
+            );
+
+        return rows
+    } catch (err) {
+        console.error(err)
+
+        return []
+    }
+}
+
+
+/* -------------------------------- Get Plan -------------------------------- */
+
+async function getGroupPlan(group_id) {
+    try {
+        var rows = 
+            await db.all(
+                `SELECT id, time
+                FROM GroupsPlan WHERE \`group\`=?`,
+                [
+                    group_id
+                ]
+            );
+
+        return rows
+    } catch (err) {
+        console.error(err)
+
+        return []
+    }
+}
+
+
 
 /* -------------------------------------------------------------------------- */
 /*                               Group Requests                               */
@@ -433,5 +477,127 @@ router.delete("/group/:group_id/members/:member_id", urlencodedParser, AsyncHand
 }))
 
 
+/* --------------------------- Create New Subjects -------------------------- */
 
-export { router, getAllGroups, isGroupMember, getAllGroupMembers, getGroupInfo }
+router.post("/group/:group_id/subjects", urlencodedParser, AsyncHandler(async (req, res) => {
+    if (!req.session.user_id) return res.sendStatus(401); // if not logged in
+
+    var group_id = parseInt(req.params.group_id)
+    if (await isGroupMember(req.session.user_id, group_id) != 0) return res.sendStatus(403); // if not group owner
+
+    if (!req.body) return res.sendStatus(417);
+    const p = req.body
+
+
+    try {
+        const prepInsert = await db.prepare("INSERT INTO GroupsSubjects (`group`, name, description) VALUES(?, ?, ?)")
+
+        for (var subject of p) {
+            if (!(subject.name)) return res.sendStatus(400);
+
+            if (!(
+                validate_subject_name(subject.name)
+            )) return res.sendStatus(400)
+
+            await prepInsert.run(group_id, subject.name, subject.description)
+        }
+
+        await prepInsert.finalize()
+        
+        return res.sendStatus(200)
+    } catch (err) {
+        console.error(err);
+
+        return res.sendStatus(500);
+    }
+}));
+
+
+/* --------------------------- Update Old Subjects -------------------------- */
+
+router.put("/group/:group_id/subjects", urlencodedParser, AsyncHandler(async (req, res) => {
+    if (!req.session.user_id) return res.sendStatus(401); // if not logged in
+
+    var group_id = parseInt(req.params.group_id)
+    if (await isGroupMember(req.session.user_id, group_id)!= 0) return res.sendStatus(403); // if not group owner
+
+    if (!req.body) return res.sendStatus(417);
+    const p = req.body
+
+    try {
+        const prepUpdate = await db.prepare("UPDATE GroupsSubjects SET name =?, description =? WHERE `group` =? AND id =?")
+
+        for (var subject of p) {
+            if (!(subject.id)) return res.sendStatus(400);
+        
+            if (!(subject.name)) return res.sendStatus(400);
+
+            if (!(
+                validate_subject_name(subject.name)
+            )) return res.sendStatus(400)
+
+            await prepUpdate.run(subject.name, subject.description, group_id, subject.id)
+        }
+
+        await prepUpdate.finalize()
+        
+        return res.sendStatus(200)
+    } catch (e) {
+        console.error(err);
+
+        return res.sendStatus(500);
+    }
+}));
+
+
+/* --------------------------- Add Subject To Plan --------------------------- */
+
+router.put("/group/:group_id/plan", urlencodedParser, AsyncHandler(async (req, res) => {
+    if(!req.body) return res.sendStatus(417);
+    const p = req.body
+
+    if (!req.session.user_id) return res.sendStatus(401); // if not logged in
+
+    if (!(p.id && p.time && p.subject_id)) return res.sendStatus(400);
+
+    try {
+        await db.run(
+            "INSERT INTO GroupsPlan (group_id, subject_id, time) VALUES(?,?,?)",
+            [
+                req.params.group_id,
+                p.subject_id,
+                p.time
+            ]
+        );
+    } catch (err) {
+        console.error(err)
+    }
+}))
+
+
+/* --------------------------- Delete Subject From Plan --------------------------- */
+
+router.delete("/group/:group_id/plan", urlencodedParser, AsyncHandler(async (req, res) => {
+    if(!req.body) return res.sendStatus(417);
+    const p = req.body
+
+    if (!req.session.user_id) return res.sendStatus(401); // if not logged in
+
+    if (!(p.id && p.subject_id)) return res.sendStatus(400);
+
+    try {
+        await db.run(
+            "DELETE FROM GroupsPlan WHERE group_id =? AND subject_id =?",
+            [
+                req.params.group_id,
+                p.subject_id
+            ]
+        );
+    } catch (err) {
+        console.error(err)
+    }
+}))
+
+
+
+export { router, getAllGroups, isGroupMember, getAllGroupMembers, getGroupInfo, getAllSubjects, getGroupPlan }

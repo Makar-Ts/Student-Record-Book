@@ -47,7 +47,8 @@
             "members": "Members",
             "files": "Files",
             "settings": "Settings",
-            "plan": "Plan"
+            "plan": "Plan",
+            "subjects": "Subjects"
         },
 
         "group_members": {
@@ -62,6 +63,16 @@
             "copy_succesfull": "Copied!",
             "regenerate_invite": "Regenerate",
             "owner": "Owner"
+        },
+
+        "group_subjects": {
+            "no_subjects_info": "You don't have any subjects yet, create some by clicking the button below!",
+            "edit_button": "Edit",
+            "edit": {
+                "name": "Subject name",
+                "description": "Description",
+                "save": "Save"
+            }
         }
     }
 }

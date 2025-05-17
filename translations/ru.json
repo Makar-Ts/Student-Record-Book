@@ -47,7 +47,8 @@
             "members": "Участники",
             "files": "Файлы",
             "settings": "Настройки",
-            "plan": "План"
+            "plan": "План",
+            "subjects": "Предметы"
         },
 
         "group_members": {
@@ -62,6 +63,16 @@
             "copy_succesfull": "Скопированно!",
             "regenerate_invite": "Пересоздать",
             "owner": "Создатель"
+        },
+
+        "group_subjects": {
+            "no_subjects_info": "Пока что у вас нет предметов, создайте несколько нажав на кнопку ниже!",
+            "edit_button": "Изменить",
+            "edit": {
+                "name": "Имя предмета",
+                "description": "Описание предмета",
+                "save": "Сохранить"
+            }
         }
     }
 }

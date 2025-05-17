@@ -1,25 +1,20 @@
-import express from 'express';
-import session from 'express-session';
-import useragent from 'express-useragent'
-import bodyParser from 'body-parser';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-import AsyncHandler from 'express-async-handler';
-import ejs from 'ejs';
+import { 
+    express,
+    session,
+    useragent,
+    bodyParser,
+    jsonParser,
+    urlencodedParser,
+    AsyncHandler,
+    ejs,
+    __dirname,
+    fs
+} from './includes.js'
 
-const jsonParser = bodyParser.json();
-const urlencodedParser = bodyParser.urlencoded({ extended: false });
-const __dirname = dirname(fileURLToPath(import.meta.url));
+import * as api from './api.js'
+import * as utils from './utils.js'
 
-import { router as apiRoute, 
-        getAllGroups, 
-        isGroupMember,
-        getAllGroupMembers,
-        getGroupInfo } from './api.js'
-// route for API requests
-
-import fs from 'fs';
-
+import { router as groupsRoute } from './groups.js'
 
 
 /* -------------------------------------------------------------------------- */
@@ -46,35 +41,23 @@ app.set('view engine', 'ejs');
 app.set('views', __dirname + '/views');
 // template directory
 
-app.use("/api", apiRoute)
+app.use("/api", api.router)
+app.use("/groups", groupsRoute)
 
+app.use((req, res, next) => {
+    var url = new URL(`http://${process.env.HOST ?? 'localhost'}${req.url}`);
 
-
-/* -------------------------------------------------------------------------- */
-/*                                  Requests                                  */
-/* -------------------------------------------------------------------------- */
-
-
-/* -------------------------------- Language -------------------------------- */
-
-const languages = {
-    "en": JSON.parse(fs.readFileSync(__dirname + "/translations/en.json", 'utf8')),
-    "ru": JSON.parse(fs.readFileSync(__dirname + "/translations/ru.json", 'utf8'))
-}
-
-function get_language(req) {
-    var lang = req.headers['accept-language'];
-    if (lang && lang.includes('ru')) {
-        return languages.ru
-    } else {
-        return languages.en
+    if (
+        url.pathname.match(/^\/login\/?$/)          ||
+        url.pathname.match(/^\/register\/?$/)       ||
+        url.pathname.match(/^\/api\/login\/?$/)     ||
+        url.pathname.match(/^\/api\/register\/?$/)
+    ) {
+        next();
+        
+        return;
     }
-}
 
-
-/* ---------------------------------- Main ---------------------------------- */
-
-app.get("/", AsyncHandler(async (req, res) => {
     if (!req.session.user_id) { // if not logged in
         res.writeHead(302, {
             'Location': '/register'
@@ -82,7 +65,19 @@ app.get("/", AsyncHandler(async (req, res) => {
         return res.end();
     }
 
-    var lang = get_language(req)
+    next();
+})
+
+
+/* -------------------------------------------------------------------------- */
+/*                                  Requests                                  */
+/* -------------------------------------------------------------------------- */
+
+
+/* ---------------------------------- Main ---------------------------------- */
+
+app.get("/", AsyncHandler(async (req, res) => {
+    var lang = utils.get_language(req)
 
     res.render("main", {
         title: "StudentRecordBook - Main",
@@ -96,7 +91,7 @@ app.get("/", AsyncHandler(async (req, res) => {
             file: "group_list",
             data: {
                 text: lang,
-                groups: await getAllGroups(req.session.user_id)
+                groups: await api.getAllGroups(req.session.user_id)
             }
         }]
     })
@@ -105,186 +100,14 @@ app.get("/", AsyncHandler(async (req, res) => {
 
 
 /* -------------------------------------------------------------------------- */
-/*                               Groups Requests                              */
-/* -------------------------------------------------------------------------- */
-
-
-app.get("/groups/:group_id", AsyncHandler(async (req, res) => {
-    if (!req.session.user_id) { // if not logged in
-        res.writeHead(302, { 
-            'Location': '/register'
-        });
-        return res.end();
-    }
-
-    var group_id = parseInt(req.params.group_id)
-    var member_role = await isGroupMember(req.session.user_id, group_id)
-
-    if (member_role == -1) {
-        res.writeHead(403, {
-            'Location': '/'
-        });
-        return res.end();
-    }
-
-    res.writeHead(308, {
-        'Location': `/groups/${group_id}/main`
-    });
-    res.end();
-}));
-
-
-app.get("/groups/:group_id/main", AsyncHandler(async (req, res) => {
-    if (!req.session.user_id) { // if not logged in
-        res.writeHead(302, {
-            'Location': '/register'
-        });
-        return res.end();
-    }
-
-    var lang = get_language(req)
-
-    var group_id = parseInt(req.params.group_id)
-    var member_role = await isGroupMember(req.session.user_id, group_id)
-
-    if (member_role == -1) {
-        res.writeHead(403, {
-            'Location': '/'
-        });
-        return res.end();
-    }
-
-
-    res.render("main", {
-        title: `StudentRecordBook - Group ${group_id}`,
-        account: {
-            id: req.session.user_id,
-            name: req.session.login
-        },
-        text: lang,
-        is_file: true,
-        content: [{
-            file: `group/tabs/${member_role == 0 ? "owner" : "member"}`,
-            data: {
-                text: lang,
-                group_id: group_id,
-                active_tab: 0
-            }
-        }]
-    })
-}));
-
-
-app.get("/groups/:group_id/members", AsyncHandler(async (req, res) => {
-    if (!req.session.user_id) { // if not logged in
-        res.writeHead(302, {
-            'Location': '/register'
-        });
-        return res.end();
-    }
-
-    var lang = get_language(req)
-
-    var group_id = parseInt(req.params.group_id)
-    var member_role = await isGroupMember(req.session.user_id, group_id)
-
-    if (member_role == -1) {
-        res.writeHead(403, {
-            'Location': '/'
-        });
-        return res.end();
-    }
-
-    res.render("main", {
-        title: `StudentRecordBook - Group ${group_id}`,
-        account: {
-            id: req.session.user_id,
-            name: req.session.login
-        },
-        text: lang,
-        is_file: true,
-        content: [
-            {
-                file: `group/tabs/${member_role == 0? "owner" : "member"}`,
-                data: {
-                    text: lang,
-                    group_id: group_id,
-                    active_tab: 2
-                }
-            }, 
-            {
-                file:`group/members/${member_role == 0? "owner" : "member"}`,
-                data: {
-                    text: lang,
-                    group_id: group_id,
-                    members: await getAllGroupMembers(group_id)
-                }
-            }
-        ]
-    })
-}));
-
-app.get("/groups/:group_id/info", AsyncHandler(async (req, res) => {
-    if (!req.session.user_id) { // if not logged in
-        res.writeHead(302, {
-            'Location': '/register'
-        });
-        return res.end();
-    }
-
-    var lang = get_language(req)
-
-    var group_id = parseInt(req.params.group_id)
-    var member_role = await isGroupMember(req.session.user_id, group_id)
-
-    if (member_role == -1) {
-        res.writeHead(403, {
-            'Location': '/'
-        });
-        return res.end();
-    }
-
-
-    res.render("main", {
-        title: `StudentRecordBook - Group ${group_id}`,
-        account: {
-            id: req.session.user_id,
-            name: req.session.login
-        },
-        text: lang,
-        is_file: true,
-        content: [
-            {
-                file: `group/tabs/${member_role == 0? "owner" : "member"}`,
-                data: {
-                    text: lang,
-                    group_id: group_id,
-                    active_tab: 1
-                }
-            }, 
-            {
-                file: `group/info/${member_role == 0? "owner" : "member"}`,
-                data: {
-                    text: lang,
-                    is_mobile: req.useragent.isMobile,
-                    group_info: await getGroupInfo(group_id)
-                }
-            }
-        ]
-    })
-}));
-
-
-
-/* -------------------------------------------------------------------------- */
-/*                                Autification                                */
+/*                                Auntification                               */
 /* -------------------------------------------------------------------------- */
 
 
 /* -------------------------------- Register -------------------------------- */
 
 app.get("/register", (req, res) => {
-    var lang = get_language(req)
+    var lang = utils.get_language(req)
 
     res.render("main", {
         title: "StudentRecordBook - Register",
@@ -307,7 +130,7 @@ app.get("/register", (req, res) => {
 /* ---------------------------------- Login --------------------------------- */
 
 app.get("/login", (req, res) => {
-    var lang = get_language(req)
+    var lang = utils.get_language(req)
 
     res.render("main", {
         title: "StudentRecordBook - Login",
@@ -333,7 +156,7 @@ app.get("/login", (req, res) => {
 /* -------------------------------------------------------------------------- */
 
 
-app.listen(80, (err) => {
+app.listen(8080, (err) => {
     if (!err) {
         console.log("Start ok")
     }

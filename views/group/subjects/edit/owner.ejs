@@ -1,0 +1,132 @@
+<div class="container"
+     style="padding: 15px">
+    <ul class="list-group list-group-vertical d-flex justify-content-between align-items-start subject-list-item" id="oldSubjects">
+    <% for (var subj of subjects) { %>
+        <li class="input-group mt-1" id="<%= subj.id %>">
+            <span class="input-group-text">#<%= subj.id %></span>
+            <input type="text" class="form-control" placeholder="<%= text.groups.group_subjects.edit.name %>" value="<%= subj.name %>" aria-label="Subject name">
+            <textarea class="form-control" placeholder="<%= text.groups.group_subjects.edit.description %>"><%= subj.description %></textarea>
+        </li>
+    <% } %>
+    </ul>
+    <div style="
+        width: 100%;
+        border: 2px solid var(--bs-border-color);
+        border-radius: 5px;
+        margin: 20px 0px;
+    "></div>
+    <ul class="list-group list-group-vertical d-flex justify-content-between align-items-start subject-list-item" id="newSubjects">
+
+    </ul>
+    <div class="btn-group w-100 mt-2">
+        <button class="btn btn-success" id="saveSubjects" style="
+            width: 100%;
+        "><%= text.groups.group_subjects.edit.save %></button>
+        <button class="btn btn-info" id="newSubject" style="
+            width: 40px;
+        "><%= "+" %></button>
+    </div>
+
+    <script>
+        const subjectsOnLoad = JSON.parse(`<%- JSON.stringify(subjects) %>`)
+
+
+        function newSubject() {
+            const container = document.createElement("li");
+            container.className = "input-group mt-1";
+            container.id = Math.round(Math.random()*100000).toString();
+
+            const button_del = document.createElement("button");
+            button_del.className = "btn btn-outline-secondary";
+            button_del.innerText = "x";
+            container.appendChild(button_del);
+
+            const input_text = document.createElement("input");
+            input_text.type = "text";
+            input_text.className = "form-control";
+            input_text.placeholder = "Subject name";
+            input_text.ariaLabel = "Subject name";
+            container.appendChild(input_text);
+
+            const textarea_text = document.createElement("textarea");
+            textarea_text.className = "form-control";
+            textarea_text.placeholder = "Subject description";
+            container.appendChild(textarea_text);
+
+            document.getElementById("newSubjects").appendChild(container);
+
+            return [container, button_del, input_text, textarea_text]
+        }
+
+        const newSubjectBtn = document.getElementById("newSubject");
+        newSubjectBtn.addEventListener("click", () => {
+            const [container, buttonDelete, inputText, textareaText] = newSubject();
+
+            buttonDelete.addEventListener("click", () => {
+                container.remove();
+            });
+        });
+
+
+        const saveSubjectsBtn = document.getElementById("saveSubjects");
+        saveSubjectsBtn.addEventListener("click", async () => {
+            const newSubjects = [];
+
+            const newSubjectElements = document.getElementById("newSubjects");
+            for (var subject of newSubjectElements.children) {
+                newSubjects.push({
+                    name: subject.querySelector("input").value,
+                    description: subject.querySelector("textarea").value
+                });
+            }
+
+            console.log(newSubjects)
+
+            
+            const updatedSubjects = [];
+
+            const oldSubjectElements = document.getElementById("oldSubjects");
+            for (var subject of oldSubjectElements.children) {
+                const   id = +subject.id,
+                        name = subject.querySelector("input").value,
+                        description = subject.querySelector("textarea").value;
+                
+                var onloadSubject = subjectsOnLoad.find(s => s.id === id);
+
+                if (onloadSubject && (
+                    onloadSubject.name !== name ||
+                    onloadSubject.description !== description
+                )) {
+                    updatedSubjects.push({
+                        id: onloadSubject.id,
+                        name: name,
+                        description: description
+                    });
+                }
+            }
+            console.log(updatedSubjects)
+
+            var insertResult = newSubjects.length > 0 ? await fetch("/api/group/<%= group_id %>/subjects", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(newSubjects)
+            }) : {ok: true}
+
+            var updateResult = updatedSubjects.length > 0 ? await fetch("/api/group/<%= group_id %>/subjects", {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(updatedSubjects)
+            }) : {ok: true}
+
+            if (insertResult.ok && updateResult.ok) {
+                window.location.reload();
+            } else {
+                console.error(insertResult.statusText, updateResult.statusText);
+            }
+        })
+    </script>
+</div>

@@ -42,9 +42,21 @@ function validate_group_code(code) {
 }
 
 
+
+/* -------------------------------------------------------------------------- */
+/*                               Group Subjects                               */
+/* -------------------------------------------------------------------------- */
+
+
+function validate_subject_name(name) {
+    return!!(name && name.match(/^[a-zA-Z0-9_. -]{3,}/));
+}
+
+
+
 /* -------------------------------------------------------------------------- */
 /*                                   Export                                   */
 /* -------------------------------------------------------------------------- */
 
 
-export { validate_email, validate_password, validate_login, validate_group_name, validate_group_code }
+export { validate_email, validate_password, validate_login, validate_group_name, validate_group_code, validate_subject_name }

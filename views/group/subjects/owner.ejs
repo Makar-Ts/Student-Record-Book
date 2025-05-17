@@ -1,0 +1,19 @@
+<div class="container">
+    <% if (subjects == 0) { %>
+        <div class="alert alert-info" role="alert" style="margin-top: 20px;">
+            <%= text.groups.group_subjects.no_subjects_info %>
+        </div>
+    <%} else { 
+        for (var subj of subjects) { %>
+        <ul class="list-group list-group-horizontal d-flex justify-content-between align-items-start mt-1">
+            <li class="list-group-item disabled" style="width: 20%;">#<%= subj.id %></li>
+            <li class="list-group-item w-50"><%= subj.name %></li>
+            <li class="list-group-item w-100"><%= subj.description == "" ? "-" : subj.description %> </li>
+        </ul>
+    <% }
+    } %>
+    <a class="btn btn-success" href="./subjects/edit" style="
+        width: 100%;
+        margin-top: 20px;
+    "><%= text.groups.group_subjects.edit_button %></a>
+</div>

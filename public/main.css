@@ -31,6 +31,15 @@
 }
 
 .no-top-border {
-    border-top-left-radius: 0;
-    border-top-right-radius: 0;
+    border-top-left-radius: 0 !important;
+    border-top-right-radius: 0 !important;
+}
+
+.no-bottom-border {
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+
+.subject-list-item {
+    margin-top: 10px;
 }
