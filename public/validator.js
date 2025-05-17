@@ -49,7 +49,22 @@ function validate_group_code(code) {
 
 
 function validate_subject_name(name) {
-    return!!(name && name.match(/^[a-zA-Z0-9_. -]{3,}/));
+    return !!(name);
+}
+
+
+
+/* -------------------------------------------------------------------------- */
+/*                                Group Lessons                               */
+/* -------------------------------------------------------------------------- */
+
+
+function validate_time(time) {
+    return /^\d+:\d+$/.test(time);
+}
+
+function validate_day(day) {
+    return Number.isInteger(day) && day >= 0 && day <= 7;
 }
 
 
@@ -59,4 +74,4 @@ function validate_subject_name(name) {
 /* -------------------------------------------------------------------------- */
 
 
-export { validate_email, validate_password, validate_login, validate_group_name, validate_group_code, validate_subject_name }
+export { validate_email, validate_password, validate_login, validate_group_name, validate_group_code, validate_subject_name, validate_time, validate_day }

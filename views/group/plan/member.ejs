@@ -1,0 +1,31 @@
+<% 
+function capitalizeFirstLetter(val) {
+    return String(val).charAt(0).toUpperCase() + String(val).slice(1);
+}
+%>
+
+<div class="container">
+    <div class="schedule-grid">
+        <% weekdays.forEach((dayName, dayIndex) => { %>
+            <div class="schedule-day">
+                <div class="day-header">
+                    <h3><%= capitalizeFirstLetter(dayName) %></h3>
+                </div>
+                
+                <div class="lessons-list">
+                    <% days[dayIndex] && days[dayIndex].forEach(lesson => { %>
+                        <div class="lesson-item" aria-disabled="true" data-id="<%= lesson.id %>">
+                            <div class="lesson-time"><%= lesson.time %></div>
+                            <div class="lesson-info">
+                                <div class="lesson-title"><%= lesson.name %></div>
+                                <% if (lesson.description) { %>
+                                    <div class="lesson-description"><%= lesson.description %></div>
+                                <% } %>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+            </div>
+        <% }) %>
+    </div>
+</div>

@@ -274,12 +274,24 @@ router.get("/:group_id/plan", AsyncHandler(async (req, res) => {
     var group_id = parseInt(req.params.group_id)
     var member_role = await api.isGroupMember(req.session.user_id, group_id)
 
-    if (member_role!= 0) {
-        res.writeHead(403, {
-            'Location': '/'
-        });
-        return res.end();
-    }
+    const days = {};
+
+    (await api.getGroupPlan(group_id)).forEach(lesson => {
+        if (lesson.day_of_week >= 0 && lesson.day_of_week <= 7) {
+            if (!days[lesson.day_of_week]) {
+                days[lesson.day_of_week] = [];
+            }
+
+            days[lesson.day_of_week].push({
+                id: lesson.id,
+                time: lesson.time,
+                name: lesson.name,
+                description: lesson.description
+            });
+        }
+    });
+
+    Object.keys(days).forEach(v => days[v] = days[v].sort((a, b) => (a.time > b.time) * 2 - 1));
 
     res.render("main", {
         title: `StudentRecordBook - Group ${group_id}`,
@@ -304,58 +316,8 @@ router.get("/:group_id/plan", AsyncHandler(async (req, res) => {
                     text: lang,
                     group_id: group_id,
                     weekdays: utils.get_localisated_calendar(req),
-                    days: [
-                        [
-                            {
-                                id: 1,
-                                time: "20:10",
-                                name: "Maths",
-                                description: "John Doe, Room 101"
-                            },{
-                                id: 1,
-                                time: "20:10",
-                                name: "Maths",
-                                description: "John Doe, Room 101"
-                            },{
-                                id: 1,
-                                time: "20:10",
-                                name: "Maths",
-                                description: "John Doe, Room 101"
-                            }
-                        ],
-                        [
-                            {
-                                id: 1,
-                                time: "20:10",
-                                name: "Maths",
-                                description: "John Doe, Room 101"
-                            }
-                        ],
-                        [
-                            {
-                                id: 1,
-                                time: "20:10",
-                                name: "Maths",
-                                description: "John Doe, Room 101"
-                            }
-                        ],
-                        [
-                            {
-                                id: 1,
-                                time: "20:10",
-                                name: "Maths",
-                                description: "John Doe, Room 101"
-                            }
-                        ],
-                        [
-                            {
-                                id: 1,
-                                time: "20:10",
-                                name: "Maths",
-                                description: "John Doe, Room 101"
-                            }
-                        ]
-                    ]
+                    days: days,
+                    subjects: await api.getAllSubjects(group_id)
                 }
             }
         ]

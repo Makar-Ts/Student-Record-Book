@@ -43,3 +43,83 @@
 .subject-list-item {
     margin-top: 10px;
 }
+
+
+.icon-button {
+    width: 30px;
+    height: 30px;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 5px;
+
+    transition: .1s;
+}
+
+.icon-button:hover:not(:disabled) {
+    transform: scale(1.1);
+}
+
+/* Schedule Grid */
+.schedule-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.schedule-day {
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.day-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.lessons-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.lesson-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--bg-primary);
+    border-radius: 6px;
+    transition: transform 0.2s;
+}
+
+.lesson-item:hover:not([aria-disabled="true"]) {
+    transform: scale(1.05);
+}
+
+.lesson-time {
+    font-weight: 500;
+    min-width: 60px;
+}
+
+.lesson-info {
+    flex-grow: 1;
+}
+
+.lesson-title {
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.lesson-description {
+    font-size: 0.9em;
+    color: var(--text-muted);
+}
+
+.lesson-actions {
+    display: flex;
+    gap: 0.5rem;
+}

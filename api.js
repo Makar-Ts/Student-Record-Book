@@ -59,7 +59,9 @@ import {
     validate_login, 
     validate_group_name, 
     validate_group_code,
-    validate_subject_name
+    validate_subject_name,
+    validate_day,
+    validate_time
 } from "./public/validator.js"
 
 
@@ -316,8 +318,10 @@ async function getGroupPlan(group_id) {
     try {
         var rows = 
             await db.all(
-                `SELECT id, time
-                FROM GroupsPlan WHERE \`group\`=?`,
+                `SELECT gp.id, gp.time, gp.day_of_week, gs.name as name, gs.description as description
+                FROM GroupsPlan gp
+                JOIN GroupsSubjects gs ON gs.id = gp.subject_id
+                WHERE "group_id"=?`,
                 [
                     group_id
                 ]
@@ -597,6 +601,122 @@ router.delete("/group/:group_id/plan", urlencodedParser, AsyncHandler(async (req
         console.error(err)
     }
 }))
+
+
+/* --------------------------- Add Lesson To Plan --------------------------- */
+
+router.post("/group/:group_id/plan", urlencodedParser, AsyncHandler(async (req, res) => {
+    if (!req.session.user_id) return res.sendStatus(401);
+    const group_id = parseInt(req.params.group_id);
+    
+    if (await isGroupMember(req.session.user_id, group_id) != 0) {
+        return res.sendStatus(403);
+    }
+
+    const { subject_id, time, day_of_week } = req.body;
+    
+    if (!validate_time(time) || !validate_day(day_of_week)) {
+        return res.sendStatus(400);
+    }
+
+    try {
+        await db.run(
+            "INSERT INTO GroupsPlan (group_id, subject_id, time, day_of_week) VALUES (?, ?, ?, ?)",
+            [group_id, subject_id, time, day_of_week]
+        );
+        res.sendStatus(200);
+    } catch (err) {
+        console.error(err);
+        res.sendStatus(500);
+    }
+}));
+
+
+/* ------------------------------- Get Lesson ------------------------------- */
+
+router.get("/group/:group_id/plan/:lesson_id", urlencodedParser, AsyncHandler(async (req, res) => {
+    if (!req.session.user_id) return res.sendStatus(401);
+    const { group_id, lesson_id } = req.params;
+    
+    if (await isGroupMember(req.session.user_id, group_id) != 0) {
+        return res.sendStatus(403);
+    }
+
+    try {
+        const row = await db.get(
+            `SELECT time, subject_id, day_of_week
+            FROM GroupsPlan
+            WHERE id =?`,
+            [lesson_id]
+        )
+
+        res.status(200);
+        res.json(row);
+    } catch (err) {
+        console.error(err);
+        res.sendStatus(500);
+    }
+}))
+
+
+/* ------------------------------ Update Lesson ----------------------------- */
+
+router.patch("/group/:group_id/plan/:lesson_id", urlencodedParser, AsyncHandler(async (req, res) => {
+    if (!req.session.user_id) return res.sendStatus(401);
+    const { group_id, lesson_id } = req.params;
+    
+    if (await isGroupMember(req.session.user_id, group_id) != 0) {
+        return res.sendStatus(403);
+    }
+
+    const { time, subject_id } = req.body;
+    
+    if (time && !validate_time(time)) return res.sendStatus(400);
+
+    try {
+        const updates = [];
+        const params = [];
+        
+        if (time) {
+            updates.push("time =?");
+            params.push(time);
+        }
+        if (subject_id) {
+            updates.push("subject_id =?");
+            params.push(subject_id);
+        }
+        
+        params.push(lesson_id);
+        await db.run(
+            `UPDATE GroupsPlan SET ${updates.join(", ")} WHERE id =?`,
+            params
+        );
+        res.sendStatus(200);
+    } catch (err) {
+        console.error(err);
+        res.sendStatus(500);
+    }
+}));
+
+
+/* ------------------------------ Delete Lesson ----------------------------- */
+
+router.delete("/group/:group_id/plan/:lesson_id", urlencodedParser, AsyncHandler(async (req, res) => {
+    if (!req.session.user_id) return res.sendStatus(401);
+    const { group_id, lesson_id } = req.params;
+    
+    if (await isGroupMember(req.session.user_id, group_id) != 0) {
+        return res.sendStatus(403);
+    }
+
+    try {
+        await db.run("DELETE FROM GroupsPlan WHERE id = ?", [lesson_id]);
+        res.sendStatus(200);
+    } catch (err) {
+        console.error(err);
+        res.sendStatus(500);
+    }
+}));
 
 
 

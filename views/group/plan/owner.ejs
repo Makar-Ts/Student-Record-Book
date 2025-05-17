@@ -1,32 +1,151 @@
 <% 
-function capitalizeFirstLetter(string) {
-    return string.charAt(0).toUpperCase() + string.slice(1);
+function capitalizeFirstLetter(val) {
+    return String(val).charAt(0).toUpperCase() + String(val).slice(1);
 }
- %>
+%>
 
 <div class="container">
-    <% for (var i=0; i<days.length; i++) { %>
-        <div class="w-100 mt-3">
-            <h3><%= capitalizeFirstLetter(weekdays[""+(i+1)%7]) %></h3>
-            <% for (var [index, subj] of days[i].entries()) { 
-                let class_mod = ""
-                if (days[i].length > 1) {
-                    if (index == 0) {
-                        class_mod = "no-bottom-border"
-                    } else if (index == days[i].length-1) {
-                        class_mod = "no-top-border"
-                    } else {
-                        class_mod = "no-top-border no-bottom-border"
-                    }
-                }
-                %>
-                <ul class="list-group list-group-horizontal d-flex justify-content-between align-items-start mt-0">
-                    <li class="list-group-item disabled <%= class_mod %>" style="width: 20%;">#<%= subj.id %></li>
-                    <li class="list-group-item <%= class_mod %>" style="width: 20%;"><%= subj.time %></li>
-                    <li class="list-group-item w-50 <%= class_mod %>"><%= subj.name %></li>
-                    <li class="list-group-item w-100 <%= class_mod %>"><%= subj.description == "" ? "-" : subj.description %> </li>
-                </ul>
-            <% } %>
-        </div>
-    <% } %>
+    <div class="schedule-grid">
+        <% weekdays.forEach((dayName, dayIndex) => { %>
+            <div class="schedule-day">
+                <div class="day-header">
+                    <h3><%= capitalizeFirstLetter(dayName) %></h3>
+                    <button class="icon-button small" 
+                        onclick="showLessonModal(<%= dayIndex %>)"
+                        data-bs-toggle="modal" 
+                        data-bs-target="#create_modal"
+                    >+</button>
+                </div>
+                
+                <div class="lessons-list">
+                    <% days[dayIndex] && days[dayIndex].forEach(lesson => { %>
+                        <div class="lesson-item" data-id="<%= lesson.id %>">
+                            <div class="lesson-time"><%= lesson.time %></div>
+                            <div class="lesson-info">
+                                <div class="lesson-title"><%= lesson.name %></div>
+                                <% if (lesson.description) { %>
+                                    <div class="lesson-description"><%= lesson.description %></div>
+                                <% } %>
+                            </div>
+                            <div class="lesson-actions">
+                                <button class="icon-button" 
+                                    onclick="editLesson(<%= lesson.id %>)"
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#create_modal"
+                                >E</button>
+                                <button class="icon-button danger" onclick="deleteLesson(<%= lesson.id %>)">-</button>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+            </div>
+        <% }) %>
+    </div>
 </div>
+
+<!-- Модальное окно -->
+<div class="modal fade" tabindex="-1" id="create_modal">
+    <div class="modal-dialog">
+        <form id="lessonForm" class="modal-content">
+            <div class="modal-header">
+                <h3><%= text.groups.group_schedule.modal_title %></h3>
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close"
+                ></button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="time" class="form-label"><%= text.groups.group_schedule.time %></label>
+                    <input type="time" name="time" class="form-control" id="time" aria-describedby="time_help">
+                    <div id="time_help" class="form-text"><%= text.groups.group_schedule.time_help %></div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="subject_id" class="form-label"><%= text.groups.group_schedule.subject %></label>
+                    <select name="subject_id" id="subject_id" required class="form-select">
+                        <% subjects.forEach(subject => { %>
+                            <option value="<%= subject.id %>"><%= subject.name %></option>
+                        <% }) %>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal"
+                >
+                    <%= text.groups.group_schedule.cancel %>
+                </button>
+                <button type="submit" class="btn btn-success" id="group_create_submit">
+                    <%= text.groups.group_schedule.save %>
+                </button>
+            </div>
+
+            <input type="hidden" name="day_of_week">
+            <input type="hidden" name="lesson_id">
+        </form>
+    </div>
+</div>
+
+<script>
+    let currentDay = 0;
+    const group_id = '<%= group_id %>';
+    
+    function showLessonModal(day) {
+        currentDay = day;
+        const form = document.getElementById('lessonForm');
+        form.reset();
+        form.querySelector('[name="day_of_week"]').value = day;
+        form.querySelector('[name="lesson_id"]').value = '';
+    }
+
+    async function editLesson(id) {
+        const response = await fetch(`/api/group/${group_id}/plan/${id}`);
+        const lesson = await response.json();
+        
+        const form = document.getElementById('lessonForm');
+        form.querySelector('[name="time"]').value = lesson.time;
+        form.querySelector('[name="subject_id"]').value = lesson.subject_id;
+        form.querySelector('[name="day_of_week"]').value = lesson.day_of_week;
+        form.querySelector('[name="lesson_id"]').value = id;
+    }
+
+    async function deleteLesson(id) {
+        if (confirm('<%= text.groups.group_schedule.delete_confirm %>')) {
+            await fetch(`/api/group/${group_id}/plan/${id}`, {
+                method: 'DELETE'
+            });
+            window.location.reload();
+        }
+    }
+
+    document.getElementById('lessonForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const formData = new FormData(e.target);
+        const lessonId = formData.get('lesson_id');
+        const url = lessonId 
+            ? `/api/group/${group_id}/plan/${lessonId}`
+            : `/api/group/${group_id}/plan`;
+            
+        await fetch(url, {
+            method: lessonId ? 'PATCH' : 'POST',
+            body: JSON.stringify({
+                day_of_week: Number(formData.get('day_of_week').valueOf()),
+                subject_id: formData.get('subject_id').valueOf(),
+                time: formData.get('time').valueOf()
+            }),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        window.location.reload();
+    });
+</script>

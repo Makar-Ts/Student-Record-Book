@@ -59,9 +59,8 @@ app.use((req, res, next) => {
     }
 
     if (!req.session.user_id) { // if not logged in
-        res.writeHead(302, {
-            'Location': '/register'
-        });
+        res.status(302);
+        res.redirect('/register');
         return res.end();
     }
 

@@ -73,6 +73,16 @@
                 "description": "Description",
                 "save": "Save"
             }
+        },
+
+        "group_schedule": {
+            "title": "Class Schedule",
+            "modal_title": "Edit Lesson",
+            "time": "Time",
+            "subject": "Subject",
+            "delete_confirm": "Delete this lesson?",
+            "cancel": "Cancel",
+            "save": "Save"
         }
     }
 }
