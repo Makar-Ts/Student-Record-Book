@@ -83,6 +83,23 @@
             "delete_confirm": "Delete this lesson?",
             "cancel": "Cancel",
             "save": "Save"
+        },
+
+        "group_plan": {
+            "title": "Schedule for the day",
+            "no_lessons_today": "No lessons scheduled for this day.",
+            "add_lesson_modal": "Add lesson for this day",
+            "edit_lesson_modal": "Edit lesson for this day",
+            "time": "Time",
+            "subject": "Subject",
+            "homework": "Homework",
+            "notes": "Notes",
+            "save": "Save",
+            "cancel": "Cancel",
+            "edit_lesson": "Edit lesson",
+            "delete_lesson": "Delete lesson",
+            "confirm_delete": "Delete this lesson?",
+            "lessons": "Lessons"
         }
     }
 }

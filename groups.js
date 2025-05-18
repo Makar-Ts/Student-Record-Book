@@ -46,8 +46,6 @@ router.get("/:group_id/", AsyncHandler(async (req, res) => {
 /* -------------------------------- Main Page ------------------------------- */
 
 router.get("/:group_id/main", AsyncHandler(async (req, res) => {
-    var lang = utils.get_language(req)
-
     var group_id = parseInt(req.params.group_id)
     var member_role = await api.isGroupMember(req.session.user_id, group_id)
 
@@ -58,24 +56,8 @@ router.get("/:group_id/main", AsyncHandler(async (req, res) => {
         return res.end();
     }
 
-
-    res.render("main", {
-        title: `StudentRecordBook - Group ${group_id}`,
-        account: {
-            id: req.session.user_id,
-            name: req.session.login
-        },
-        text: lang,
-        is_file: true,
-        content: [{
-            file: `group/tabs/${member_role == 0 ? "owner" : "member"}`,
-            data: {
-                text: lang,
-                group_id: group_id,
-                active_tab: 0
-            }
-        }]
-    })
+    const today = new Date().toISOString().slice(0, 10);
+    res.redirect(`/groups/${group_id}/plan/date/${today}`);
 }));
 
 
@@ -322,6 +304,85 @@ router.get("/:group_id/plan", AsyncHandler(async (req, res) => {
             }
         ]
     })
+}));
+
+
+/* ---------------------------------- Main ---------------------------------- */
+
+function convertDate(date, visual, add = 0) {
+    const convertedDate = new Date(date.getTime());
+    convertedDate.setUTCDate(convertedDate.getUTCDate() + add);
+
+    return `${convertedDate.getUTCFullYear()}-${convertedDate.getUTCMonth() < 10 ? "0" : ""}${convertedDate.getUTCMonth()+(visual ? 1 : 0)}-${convertedDate.getUTCDate() < 10 ? "0" : ""}${convertedDate.getUTCDate()}`;
+}
+
+router.get("/:group_id/plan/date/:date", AsyncHandler(async (req, res) => {
+    let lang = utils.get_language(req);
+
+    let group_id = parseInt(req.params.group_id);
+    const spl = req.params.date.split('-').map(v => Number(v));
+    const convertedDate = new Date(spl[0], spl[1]-1, spl[2]+1);
+
+    let date = convertDate(convertedDate, true);
+    let member_role = await api.isGroupMember(req.session.user_id, group_id);
+
+    if (member_role == -1) {
+        res.writeHead(403, { 'Location': '/' });
+        return res.end();
+    }
+
+    const weekdayNames = utils.get_localisated_calendar(req);
+    const weekdayIndex = convertedDate.getUTCDay();
+    const weekdayName = weekdayNames[weekdayIndex];
+
+    const lessonsRaw = await api.getLessonsByDate(group_id, date);
+
+    const subjects = await api.getAllSubjects(group_id);
+    const subjectsMap = new Map(subjects.map(s => [s.id, s.name]));
+    const lessons = lessonsRaw.map(lesson => ({
+        id: lesson.id,
+        time: lesson.time,
+        subject_id: lesson.subject_id,
+        subject_name: subjectsMap.get(lesson.subject_id) || '',
+        homework: lesson.homework || '',
+        notes: lesson.notes || ''
+    }));
+
+    const planViewFile = `group/plan/date/${member_role === 0 ? "owner" : "member"}`;
+
+    res.render("main", {
+        title: `StudentRecordBook - Group ${group_id} - Schedule for ${convertDate(convertedDate, true)}`,
+        account: {
+            id: req.session.user_id,
+            name: req.session.login
+        },
+        text: lang,
+        is_file: true,
+        content: [            
+            {
+                file: `group/tabs/${member_role == 0 ? "owner" : "member"}`,
+                data: {
+                    text: lang,
+                    group_id: group_id,
+                    active_tab: 0
+                }
+            },
+            {
+                file: planViewFile,
+                data: {
+                    text: lang,
+                    group_id: group_id,
+                    date: date,
+                    next_date: convertDate(convertedDate, true, 1),
+                    prev_date: convertDate(convertedDate, true, -1),
+                    displayDate: convertDate(convertedDate, true),
+                    weekdayName: weekdayName,
+                    lessons: lessons,
+                    subjects: subjects
+                }
+            }
+        ]
+    });
 }));
 
 

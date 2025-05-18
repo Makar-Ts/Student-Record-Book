@@ -336,6 +336,43 @@ async function getGroupPlan(group_id) {
 }
 
 
+/* -------------------------- Get Lessions By Date -------------------------- */
+
+async function getLessonsByDate(group_id, date) {
+    try {
+        const version = await db.get(`
+            SELECT id FROM GroupsPlanVersion
+            WHERE group_id =? AND date =?
+        `, [group_id, date]);
+
+        console.log(group_id, date, version)
+
+        let lessons = [];
+        if (version) {
+            lessons = await db.all(`
+                SELECT id, time, subject_id, homework, notes
+                FROM GroupsPlanLessonVersion
+                WHERE version_id = ?
+                ORDER BY time ASC
+            `, [version.id]);
+        } else {
+            const dayOfWeek = (new Date(date)).getDay();
+            lessons = await db.all(`
+                SELECT gp.id, gp.time, gp.subject_id, '' as homework, '' as notes
+                FROM GroupsPlan gp
+                WHERE gp.group_id =? AND gp.day_of_week =?
+                ORDER BY gp.time ASC
+            `, [group_id, dayOfWeek]);
+        }
+
+        return lessons;
+    }  catch (err) {
+        console.error(err);
+        return [];
+    }
+}
+
+
 
 /* -------------------------------------------------------------------------- */
 /*                               Group Requests                               */
@@ -719,5 +756,109 @@ router.delete("/group/:group_id/plan/:lesson_id", urlencodedParser, AsyncHandler
 }));
 
 
+/* ---------------------------- Get Plan By Date ---------------------------- */
 
-export { router, getAllGroups, isGroupMember, getAllGroupMembers, getGroupInfo, getAllSubjects, getGroupPlan }
+router.get("/group/:group_id/plan/date/:date", urlencodedParser, AsyncHandler(async (req, res) => {
+    if (!req.session.user_id) return res.sendStatus(401);
+    const { group_id, date } = req.params;
+
+    if (await isGroupMember(req.session.user_id, group_id) !== 0) {
+        return res.sendStatus(403);
+    }
+
+    try {
+        res.json(await getLessonsByDate(group_id, date));
+    } catch (err) {
+        console.error(err);
+        res.sendStatus(500);
+    }
+}));
+
+
+/* -------------------------- Create Planned Lesson ------------------------- */
+
+router.post("/group/:group_id/plan/date/:date/lesson", jsonParser, AsyncHandler(async (req, res) => {
+    if (!req.session.user_id) return res.sendStatus(401);
+    const { group_id, date } = req.params;
+    const { time, subject_id, homework, notes, lesson_id } = req.body;
+
+    if (await isGroupMember(req.session.user_id, group_id) !== 0) {
+        return res.sendStatus(403);
+    }
+
+    try {
+        let version = await db.get(`
+            SELECT id FROM GroupsPlanVersion
+            WHERE group_id = ? AND date = ?
+        `, [group_id, date]);
+        if (!version) {
+            const template = await getLessonsByDate(group_id, date);
+
+            const result = await db.run(`
+                INSERT INTO GroupsPlanVersion (group_id, date)
+                VALUES (?, ?)
+            `, [group_id, date]);
+            version = { id: result.lastID, created: true };
+
+            await db.run(`
+                INSERT INTO GroupsPlanLessonVersion (version_id, time, subject_id, homework, notes)
+                VALUES ${template
+                    .map(v => (v.id != lesson_id) && `(${version.id}, '${v.time}', ${v.subject_id}, '', '')`)
+                    .filter(Boolean)
+                    .join(', ')
+                }
+            `)
+        }
+
+        if (!version.created) {
+            await db.run(`
+                UPDATE GroupsPlanLessonVersion
+                SET time = ?, subject_id = ?, homework = ?, notes = ?
+                WHERE id = ? AND version_id = ?
+            `, [time, subject_id, homework, notes, lesson_id, version.id]);
+        } else {
+            await db.run(`
+                INSERT INTO GroupsPlanLessonVersion (version_id, time, subject_id, homework, notes)
+                VALUES (?, ?, ?, ?, ?)
+            `, [version.id, time, subject_id, homework, notes]);
+        }
+
+        res.sendStatus(200);
+    } catch (err) {
+        console.error(err);
+        res.sendStatus(500);
+    }
+}));
+
+
+/* -------------------------- Delete Planned Lesson ------------------------- */
+
+router.delete("/group/:group_id/plan/date/:date/lesson/:lesson_id", urlencodedParser, AsyncHandler(async (req, res) => {
+    if (!req.session.user_id) return res.sendStatus(401);
+    const { group_id, date, lesson_id } = req.params;
+
+    if (await isGroupMember(req.session.user_id, group_id) !== 0) {
+        return res.sendStatus(403);
+    }
+
+    try {
+        const version = await db.get(`
+            SELECT id FROM GroupsPlanVersion
+            WHERE group_id = ? AND date = ?
+        `, [group_id, date]);
+        if (!version) return res.sendStatus(404);
+
+        await db.run(`
+            DELETE FROM GroupsPlanLessonVersion
+            WHERE id = ? AND version_id = ?
+        `, [lesson_id, version.id]);
+
+        res.sendStatus(200);
+    } catch (err) {
+        console.error(err);
+        res.sendStatus(500);
+    }
+}));
+
+
+export { router, getAllGroups, isGroupMember, getAllGroupMembers, getGroupInfo, getAllSubjects, getGroupPlan, getLessonsByDate }

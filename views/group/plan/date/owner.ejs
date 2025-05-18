@@ -1,0 +1,158 @@
+<%
+function capitalizeFirstLetter(val) {
+    return String(val).charAt(0).toUpperCase() + String(val).slice(1);
+}
+
+function bytesToBase64(bytes) {
+    const binString = String.fromCodePoint(...bytes);
+    return btoa(binString);
+}
+%>
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mt-4 mb-2">
+        <h2><%= text.groups.group_plan.title %> (<%= displayDate %>)</h2>
+        <a href="/groups/<%= group_id %>/plan" class="btn btn-outline-light btn-sm">&larr; <%= text.groups.group_tabs.plan %></a>
+    </div>
+    <div class="d-flex justify-content-between align-items-center mt-4 mb-2">
+        <a href="/groups/<%= group_id %>/plan/date/<%= prev_date %>" class="btn btn-outline-primary btn-sm">&larr; <%= prev_date %></a>
+        <a href="/groups/<%= group_id %>/plan/date/<%= next_date %>" class="btn btn-outline-secondary btn-sm"><%= next_date %> &rarr;</a>
+    </div>
+    <div class="schedule-grid">
+        <div class="schedule-day">
+            <div class="day-header">
+                <h3><%= capitalizeFirstLetter(weekdayName) %></h3>
+                <button class="icon-button small" type="button"
+                    data-bs-toggle="modal"
+                    data-bs-target="#editLessonModal"
+                    onclick="prepareNewLessonForm()"
+                >+</button>
+            </div>
+            <div class="lessons-list">
+                <% if (lessons.length === 0) { %>
+                    <div class="alert alert-info">
+                        <%= text.groups.group_plan.no_lessons_today %>
+                    </div>
+                <% } %>
+                <% lessons.forEach(lesson => { %>
+                    <div class="lesson-item" data-id="<%= lesson.id %>">
+                        <div class="lesson-time"><%= lesson.time %></div>
+                        <div class="lesson-info">
+                            <div class="lesson-title"><%= lesson.subject_name %></div>
+                            <% if (lesson.homework) { %>
+                                <div class="lesson-description"><strong><%= text.groups.group_plan.homework %>:</strong> <%= lesson.homework %></div>
+                            <% } %>
+                            <% if (lesson.notes) { %>
+                                <div class="lesson-description"><strong><%= text.groups.group_plan.notes %>:</strong> <%= lesson.notes %></div>
+                            <% } %>
+                        </div>
+                        <div class="lesson-actions btn-group">
+                            <button class="btn btn-info btn-sm" title="<%= text.groups.group_plan.edit_lesson %>"
+                                data-bs-toggle="modal" data-bs-target="#editLessonModal"
+                                onclick="prepareEditLessonForm('<%- bytesToBase64(new TextEncoder().encode(JSON.stringify(lesson))) %>')"
+                            >&#9998;</button>
+                            <button class="btn btn-danger btn-sm" title="<%= text.groups.group_plan.delete_lesson %>"
+                                onclick="deleteLesson('<%= lesson.id %>')"
+                            >&times;</button>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editLessonModal" tabindex="-1" aria-labelledby="editLessonModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="lessonForm" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editLessonModalLabel"><%= text.groups.group_plan.edit_lesson_modal %></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+          <input type="hidden" name="lesson_id" id="lesson_id" />
+          <div class="mb-3">
+            <label for="lesson_time" class="form-label"><%= text.groups.group_plan.time %></label>
+            <input type="time" class="form-control" id="lesson_time" name="time" required>
+          </div>
+          <div class="mb-3">
+            <label for="lesson_subject" class="form-label"><%= text.groups.group_plan.subject %></label>
+            <select class="form-select" id="lesson_subject" name="subject_id" required>
+                <% subjects.forEach(subj => { %>
+                    <option value="<%= subj.id %>"><%= subj.name %></option>
+                <% }) %>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="lesson_homework" class="form-label"><%= text.groups.group_plan.homework %></label>
+            <textarea class="form-control" id="lesson_homework" name="homework"></textarea>
+          </div>
+          <div class="mb-3">
+            <label for="lesson_notes" class="form-label"><%= text.groups.group_plan.notes %></label>
+            <textarea class="form-control" id="lesson_notes" name="notes"></textarea>
+          </div>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-success"><%= text.groups.group_plan.save %></button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><%= text.groups.group_plan.cancel %></button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+    function base64ToBytes(base64) {
+        const binString = atob(base64);
+        return Uint8Array.from(binString, (m) => m.codePointAt(0));
+    }
+
+    function prepareNewLessonForm() {
+        document.getElementById("editLessonModalLabel").innerText = "<%= text.groups.group_plan.add_lesson_modal %>"
+        document.getElementById("lesson_id").value = "";
+        document.getElementById("lesson_time").value = "";
+        document.getElementById("lesson_subject").selectedIndex = 0;
+        document.getElementById("lesson_homework").value = "";
+        document.getElementById("lesson_notes").value = "";
+    }
+
+    function prepareEditLessonForm(lesson) {
+        lesson = JSON.parse(new TextDecoder().decode(base64ToBytes(lesson)));
+        console.log(lesson)
+
+        document.getElementById("editLessonModalLabel").innerText = "<%= text.groups.group_plan.edit_lesson_modal %>"
+        document.getElementById("lesson_id").value = lesson.id;
+        document.getElementById("lesson_time").value = lesson.time;
+        document.getElementById("lesson_subject").value = lesson.subject_id;
+        document.getElementById("lesson_homework").value = lesson.homework || "";
+        document.getElementById("lesson_notes").value = lesson.notes || "";
+    }
+
+
+    document.getElementById("lessonForm").addEventListener("submit", function(e) {
+        e.preventDefault();
+        const form = e.target;
+        const payload = {
+            lesson_id: form.lesson_id.value || undefined,
+            time: form.time.value,
+            subject_id: form.subject_id.value,
+            homework: form.homework.value,
+            notes: form.notes.value,
+        };
+        fetch('/api/group/<%= group_id %>/plan/date/<%= date %>/lesson', {
+            method: 'POST',
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        })
+        .then(resp => {
+            if (resp.ok) window.location.reload();
+        });
+    });
+
+    function deleteLesson(lessonId) {
+        if (!confirm("<%= text.groups.group_plan.confirm_delete %>")) return;
+        fetch('/api/group/<%= group_id %>/plan/date/<%= date %>/lesson/' + lessonId, {
+            method: 'DELETE'
+        }).then(resp => {
+            if (resp.ok) window.location.reload();
+        });
+    }
+</script>
